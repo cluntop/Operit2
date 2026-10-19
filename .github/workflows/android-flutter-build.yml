@@ -161,6 +161,18 @@ jobs:
           if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
           & $tsc --version
 
+      - name: Install workspace dependencies
+        shell: pwsh
+        run: |
+          $pnpmWorkspace = "plugins/packages/buildin/pnpm-workspace.yaml"
+          if (Test-Path $pnpmWorkspace) {
+            Push-Location (Split-Path $pnpmWorkspace)
+            pnpm install --frozen-lockfile
+            Pop-Location
+          } else {
+            Write-Host "pnpm-workspace.yaml not found, skipping pnpm install"
+          }
+
       - name: Prepare Android bindgen libclang
         shell: pwsh
         run: |
