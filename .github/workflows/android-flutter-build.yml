@@ -99,6 +99,27 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install TypeScript toolchain
+        shell: pwsh
+        working-directory: .ci-tools/typescript
+        run: |
+          if (-not (Test-Path "package.json")) {
+            throw "package.json not found in .ci-tools/typescript"
+          }
+          if (Test-Path "package-lock.json") {
+            npm ci
+          } else {
+            npm install
+          }
+          $tsc = Join-Path $PWD "node_modules\.bin\tsc.cmd"
+          if (-not (Test-Path $tsc)) {
+            throw "tsc was not installed at $tsc"
+          }
+          & $tsc --version
+
+      - name: Install Node dependencies
+        run: npm install
+
       - name: Install Java
         uses: actions/setup-java@v4
         with:
@@ -110,10 +131,16 @@ jobs:
         run: |
           dart pub global activate fvm $env:FVM_VERSION
           "$env:APPDATA\Pub\Cache\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-      
+
+      - name: Add node_modules/.bin to PATH
+        shell: pwsh
+        run: |
+          $nodeBin = Join-Path $env:GITHUB_WORKSPACE "node_modules\.bin"
+          $nodeBin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
       - name: Add venv to PATH
         shell: pwsh
-        run: echo "${{ github.workspace }}\.venv\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+        run: echo "$env:GITHUB_WORKSPACE\.venv\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Install project Flutter SDK
         working-directory: apps/flutter/app
