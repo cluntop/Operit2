@@ -155,12 +155,15 @@ jobs:
       - name: Prepare TypeScript toolchain
         shell: pwsh
         run: |
-          $ver = "5.9.3"
+          $ver = "5.8.3"
           $pkg = "plugins/sdk/clients/typescript/package.json"
           if (Test-Path $pkg) {
             $json = Get-Content $pkg -Raw | ConvertFrom-Json
             if ($json.devDependencies.typescript) {
-              $ver = $json.devDependencies.typescript -replace '^[\^~]', ''
+              $raw = $json.devDependencies.typescript -replace '^[\^~]', ''
+              # 只接受形如 x.y.z 的正式版本号
+              if ($raw -match '^\d+\.\d+\.\d+$') { $ver = $raw }
+              else { Write-Host "Ignoring non-standard version '$raw', using $ver" }
             }
           }
           Write-Host "Using TypeScript $ver"
