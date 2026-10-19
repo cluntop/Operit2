@@ -99,29 +99,31 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install TypeScript toolchain
+      - name: Debug - inspect repo layout
         shell: pwsh
-        working-directory: .ci-tools/typescript
         run: |
-          if (-not (Test-Path "package.json")) {
-            throw "package.json not found in .ci-tools/typescript"
-          }
-          if (Test-Path "package-lock.json") {
-            npm ci
-          } else {
-            npm install
-          }
-          $tsc = Join-Path $PWD "node_modules\.bin\tsc.cmd"
-          if (-not (Test-Path $tsc)) {
-            throw "tsc was not installed at $tsc"
-          }
-          & $tsc --version
+          Write-Host "=== GITHUB_WORKSPACE ==="
+          Write-Host $env:GITHUB_WORKSPACE
+          Write-Host "`n=== .ci-tools exists? ==="
+          Test-Path .ci-tools
+          Write-Host "`n=== .ci-tools content ==="
+          if (Test-Path .ci-tools) { Get-ChildItem -Recurse .ci-tools | Select-Object FullName }
+          Write-Host "`n=== package.json locations ==="
+          Get-ChildItem -Recurse -Filter "package.json" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\node_modules\\' } |
+            Select-Object -ExpandProperty FullName
+          Write-Host "`n=== tsc on PATH? ==="
+          Get-Command tsc -ErrorAction SilentlyContinue
+          Write-Host "`n=== grep ci-tools in scripts ==="
+          Get-ChildItem -Recurse -Include *.py,*.ps1,*.sh -ErrorAction SilentlyContinue |
+            Select-String -Pattern "ci-tools" -List |
+            Select-Object Path, LineNumber, Line
 
       - name: Install Node dependencies
         run: npm install
 
       - name: Install Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
