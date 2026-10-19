@@ -78,6 +78,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Download Android terminal runtime
         uses: actions/download-artifact@v4
         with:
@@ -105,6 +110,10 @@ jobs:
         run: |
           dart pub global activate fvm $env:FVM_VERSION
           "$env:APPDATA\Pub\Cache\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+      
+      - name: Add venv to PATH
+        shell: pwsh
+        run: echo "${{ github.workspace }}\.venv\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Install project Flutter SDK
         working-directory: apps/flutter/app
@@ -166,14 +175,24 @@ jobs:
         shell: pwsh
         run: python tools/build_scripts/check_build_environment.py --products app --github-runner
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
-
       - name: Create virtual environment
-        run: python -m venv .venv
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          if (-not (Test-Path ".venv\Scripts\python.exe")) {
+            throw "venv python was not created"
+          }
+          .venv\Scripts\python.exe --version
 
-      - name: Install dependencies (if any)
-        run: .venv\Scripts\pip install -r plugins/tools/requirements.txt
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          $req = "plugins/tools/requirements.txt"
+          if (Test-Path $req) {
+            .venv\Scripts\pip install -r $req
+          } else {
+            Write-Host "No $req found, skipping Python deps."
+          }
 
       - name: Build and package Android app
         shell: pwsh
