@@ -166,6 +166,15 @@ jobs:
         shell: pwsh
         run: python tools/build_scripts/check_build_environment.py --products app --github-runner
 
+      - name: Set up Python
+        uses: actions/setup-python@v7
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install dependencies (if any)
+        run: .venv\Scripts\pip install -r plugins/tools/requirements.txt
+
       - name: Build and package Android app
         shell: pwsh
         run: |
