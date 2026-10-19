@@ -155,20 +155,8 @@ jobs:
       - name: Prepare TypeScript toolchain
         shell: pwsh
         run: |
-          $ver = "5.8.3"
-          $pkg = "plugins/sdk/clients/typescript/package.json"
-          if (Test-Path $pkg) {
-            $json = Get-Content $pkg -Raw | ConvertFrom-Json
-            if ($json.devDependencies.typescript) {
-              $raw = $json.devDependencies.typescript -replace '^[\^~]', ''
-              # 只接受形如 x.y.z 的正式版本号
-              if ($raw -match '^\d+\.\d+\.\d+$') { $ver = $raw }
-              else { Write-Host "Ignoring non-standard version '$raw', using $ver" }
-            }
-          }
-          Write-Host "Using TypeScript $ver"
           $env:PYTHONPATH = "."
-          python -c "from tools.build_scripts.common import ensure_typescript; ensure_typescript('$ver')"
+          python -c "from tools.build_scripts.common import ensure_typescript; ensure_typescript('5.8.3')"
           $tsc = ".ci-tools\typescript\node_modules\.bin\tsc.cmd"
           if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
           & $tsc --version
