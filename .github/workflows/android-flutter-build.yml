@@ -119,9 +119,6 @@ jobs:
             Select-String -Pattern "ci-tools" -List |
             Select-Object Path, LineNumber, Line
 
-      - name: Install Node dependencies
-        run: npm install
-
       - name: Install Java
         uses: actions/setup-java@v5
         with:
@@ -154,6 +151,24 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
           targets: aarch64-linux-android
+          
+      - name: Prepare TypeScript toolchain
+        shell: pwsh
+        run: |
+          $ver = "5.9.3"
+          $pkg = "plugins/sdk/clients/typescript/package.json"
+          if (Test-Path $pkg) {
+            $json = Get-Content $pkg -Raw | ConvertFrom-Json
+            if ($json.devDependencies.typescript) {
+              $ver = $json.devDependencies.typescript -replace '^[\^~]', ''
+            }
+          }
+          Write-Host "Using TypeScript $ver"
+          $env:PYTHONPATH = "."
+          python -c "from tools.build_scripts.common import ensure_typescript; ensure_typescript('$ver')"
+          $tsc = ".ci-tools\typescript\node_modules\.bin\tsc.cmd"
+          if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
+          & $tsc --version
 
       - name: Prepare Android bindgen libclang
         shell: pwsh
