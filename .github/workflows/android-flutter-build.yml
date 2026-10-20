@@ -161,16 +161,22 @@ jobs:
           if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
           & $tsc --version
 
-      - name: Install workspace dependencies
+      - name: Install pnpm dependencies
         shell: pwsh
         run: |
-          $pnpmWorkspace = "plugins/packages/buildin/pnpm-workspace.yaml"
-          if (Test-Path $pnpmWorkspace) {
-            Push-Location (Split-Path $pnpmWorkspace)
-            pnpm install --frozen-lockfile
-            Pop-Location
-          } else {
-            Write-Host "pnpm-workspace.yaml not found, skipping pnpm install"
+          $locks = Get-ChildItem -Recurse -Filter "pnpm-lock.yaml" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\node_modules\\' }
+          if (-not $locks) { throw "No pnpm-lock.yaml found" }
+          foreach ($lock in $locks) {
+            $dir = $lock.DirectoryName
+            Write-Host "=== pnpm install in $dir ==="
+            Push-Location $dir
+            try {
+              pnpm install --no-frozen-lockfile
+              if ($LASTEXITCODE -ne 0) { throw "pnpm install failed in $dir" }
+            } finally {
+              Pop-Location
+            }
           }
 
       - name: Prepare Android bindgen libclang
