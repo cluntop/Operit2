@@ -161,6 +161,13 @@ jobs:
           if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
           & $tsc --version
 
+      - name: Enable pnpm via corepack
+        shell: pwsh
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+
       - name: Install pnpm dependencies
         shell: pwsh
         run: |
