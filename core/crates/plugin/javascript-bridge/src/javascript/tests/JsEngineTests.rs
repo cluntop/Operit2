@@ -23,7 +23,7 @@ use operit_util::RuntimeStoreRoot::{setDefaultRuntimeStoreRootConfig, RuntimeSto
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::OnceLock;
@@ -197,7 +197,13 @@ pub(super) fn newTestJsEngineState(
     let runtime = testJavaScriptRuntimeHost()
         .createHostJavaScriptRuntime()
         .expect("test JavaScript runtime must start");
-    JsEngineState::newWithRuntime(runtime, executionHost, None, Arc::new(Mutex::new(None)))
+    JsEngineState::newWithRuntime(
+        runtime,
+        executionHost,
+        None,
+        Arc::new(Mutex::new(None)),
+        Arc::new(AtomicBool::new(true)),
+    )
         .expect("test JavaScript state must initialize")
 }
 
@@ -817,6 +823,47 @@ async fn async_tool_call_yields_to_ready_javascript_promise() {
         started.elapsed() < Duration::from_millis(100),
         "tool execution must not block the QuickJS worker"
     );
+    engine.destroy();
+}
+
+/// Verifies the promise-job pump resumes execution when a callback wake is lost.
+#[cfg(not(target_arch = "wasm32"))]
+#[tokio::test(flavor = "current_thread")]
+async fn lost_callback_wake_is_recovered_by_the_promise_job_pump() {
+    ensure_test_runtime_root();
+    let engine = newTestJsEngine(Arc::new(TestPluginConfigExecutionHost::default()));
+    engine
+        .worker
+        .asyncCallbackWakeEnabled
+        .store(false, Ordering::Release);
+    let started = Instant::now();
+    let output = engine
+        .execute_script_function(
+            r#"
+                exports.wait = async function() {
+                    var slept = await Tools.System.sleep(20);
+                    return slept.sleptMs;
+                };
+            "#,
+            "wait",
+            &testParams(),
+            &BTreeMap::new(),
+            None,
+            true,
+            2,
+            None,
+        )
+        .await
+        .expect("the promise job pump must resume a lost callback wake");
+    assert_eq!(output.as_deref(), Some("20"));
+    assert!(
+        started.elapsed() < Duration::from_millis(1500),
+        "the pump must recover the lost wake well before the 2 second deadline"
+    );
+    engine
+        .worker
+        .asyncCallbackWakeEnabled
+        .store(true, Ordering::Release);
     engine.destroy();
 }
 
@@ -1780,11 +1827,13 @@ async fn call_environment_updates_survive_state_turns() {
     engine.destroy();
 }
 
-/// Abandoning an async request must cancel its session on the owning affine thread.
+/// Abandoning a host wait must run JavaScript cleanup before the affine cancellation step finishes.
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn abandoned_async_request_cancels_affine_session() {
-    let engine = newTestJsEngine(Arc::new(TestPluginConfigExecutionHost::default()));
+    let host = Arc::new(TestPluginConfigExecutionHost::default());
+    let toolHost = host.clone();
+    let engine = newTestJsEngine(host.clone());
     let caller = engine.clone();
     let started = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let signal = started.clone();
@@ -1800,9 +1849,15 @@ fn abandoned_async_request_cancels_affine_session() {
         let task = tokio::task::spawn_local(async move {
             caller
                 .execute_script_function_async(
-                    r#"exports.wait = async function() {
-                    __operitSendIntermediateResult(globalThis.__operitCurrentCallId, 'started');
-                    return await new Promise(function() {});
+                    r#"/** Releases shared state when the owning host wait is cancelled. */
+                    exports.wait = async function() {
+                    globalThis.cancelledCleanupCount = 0;
+                    try {
+                        __operitSendIntermediateResult(globalThis.__operitCurrentCallId, 'started');
+                        return await toolCall('gate', {});
+                    } finally {
+                        globalThis.cancelledCleanupCount++;
+                    }
                 };"#
                     .to_string(),
                     "wait".to_string(),
@@ -1823,6 +1878,9 @@ fn abandoned_async_request_cancels_affine_session() {
             started.load(Ordering::Acquire),
             "aborted request must have started"
         );
+        tokio::time::timeout(Duration::from_secs(1), toolHost.gatedToolStarted.notified())
+            .await
+            .expect("host wait must have started before cancellation");
         task.abort();
         assert!(task.await.unwrap_err().is_cancelled());
     });
@@ -1836,16 +1894,23 @@ fn abandoned_async_request_cancels_affine_session() {
                 1_000,
                 Box::new(|state, _| {
                     let state = state.downcast_mut::<JsEngineState>().unwrap();
-                    Ok(Box::new(state.pendingScriptExecutions.len()))
+                    let cleanup = state.runtime.evaluateHostJavaScriptString(
+                        "cancellation-cleanup",
+                        "String(globalThis.cancelledCleanupCount)",
+                    )?;
+                    Ok(Box::new((state.pendingScriptExecutions.len(), cleanup)))
                 }),
             )
             .unwrap();
-        if *output.downcast::<usize>().unwrap() == 0 {
+        let (pending, cleanup) = *output.downcast::<(usize, String)>().unwrap();
+        if pending == 0 {
+            assert_eq!(cleanup, "1", "cancelled host wait must run its finally block");
             break;
         }
         assert!(Instant::now() < deadline, "abandoned affine session leaked");
         std::thread::sleep(Duration::from_millis(1));
     }
+    finishGatedTool(&host);
     engine.destroy();
 }
 

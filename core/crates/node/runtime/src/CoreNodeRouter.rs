@@ -787,7 +787,7 @@ impl CoreNodeRouter {
     ) -> CoreCallResponse {
         if request.target == NODE_SPACE_TARGET {
             let requestId = request.requestId.clone();
-            if let Err(error) = self.requireDirectPeer(&targetNodeId, PairingDirection::Outbound) {
+            if let Err(error) = self.requireDirectPeer(&targetNodeId, PairingDirection::Either) {
                 return CoreCallResponse::err(requestId, error);
             }
             let space = match self.spaceStore.initialize() {
@@ -1892,12 +1892,13 @@ impl CoreLinkClient for CoreNodeRouter {
 
 // 接收入口只接受 runtime 已鉴权的相邻节点；传输层不能直接把自报身份传进来。
 impl CoreNodeRouter {
-    /// Space 加入前只允许直接配对的业务 Call；出入授权不互相推导。
+    /// Space 加入前只要求与对端存在当前配对，不要求配对方向；加入资格
+    /// 不取决于配对由谁发起，成员资格仍由对端审批决定。
     fn requireDirectPeer(&self, peerNodeId: &str, direction: PairingDirection) -> Result<(), CoreLinkError> {
         if peerNodeId == self.localNodeId || !self.nodeServices()
             .map_err(CoreLinkError::internal)?.peers().hasPairing(peerNodeId, direction)?
         {
-            return Err(CoreLinkError::new("PEER_NOT_AUTHORIZED", "Direct directional pairing is required"));
+            return Err(CoreLinkError::new("PEER_NOT_AUTHORIZED", "A current direct pairing is required"));
         }
         if self.networkControlStore.nodeIsDisconnected(peerNodeId).map_err(CoreLinkError::internal)? {
             return Err(CoreLinkError::new("CORE_NODE_REVOKED", "Peer is revoked from this Space"));
@@ -1926,7 +1927,7 @@ impl CoreNodeRouter {
                 {
                     return Err(CoreLinkError::new("PEER_DIRECT_CALL_REQUIRED", "Node Space calls cannot be relayed"));
                 }
-                self.requireDirectPeer(&previousNodeId, PairingDirection::Inbound)?;
+                self.requireDirectPeer(&previousNodeId, PairingDirection::Either)?;
                 RuntimeRemoteLinkService::newWithRouter((*self.localCore).clone(), self.clone())
                     .acceptPeerSpaceCall(&previousNodeId, request.payload)
                     .map_err(CoreLinkError::internal)
@@ -3492,6 +3493,34 @@ mod tests {
         router.networkControlStore.disconnectNode("sync-peer".into()).unwrap();
         assert!(router.routedCall("sync-peer".into(), request).await.result.is_err());
     }
+
+    /// Space peer calls need only a current pairing, never a specific pairing
+    /// direction: joining a Space must not depend on which side dialed, so an
+    /// inbound-only or outbound-only credential passes the peer gate while a
+    /// missing pairing and a policy disconnect stay rejected.
+    #[tokio::test]
+    async fn space_peer_gate_admits_any_current_pairing_direction() {
+        let _guard = routeTestGlobalLock().lock().await;
+        installTestRuntimeScheduler();
+        let router = testCoreNodeRouter("space-local", "space-peer", "space-binding");
+        let peers = TestPeerService::new("space-local".into(), "space-peer".into(), Arc::new(TestClientEndpoint));
+        router.installNodeServices(NodeServices::new(peers.clone())).unwrap();
+
+        for (inbound, outbound) in [(true, false), (false, true), (true, true)] {
+            peers.setPairingDirections(inbound, outbound);
+            assert!(
+                router.requireDirectPeer("space-peer", PairingDirection::Either).is_ok(),
+                "a current pairing must pass regardless of direction (inbound={inbound} outbound={outbound})"
+            );
+        }
+        peers.setPairingDirections(false, false);
+        let error = router.requireDirectPeer("space-peer", PairingDirection::Either).unwrap_err();
+        assert_eq!(error.code, "PEER_NOT_AUTHORIZED");
+        peers.setPairingDirections(true, true);
+        router.networkControlStore.disconnectNode("space-peer".into()).unwrap();
+        let error = router.requireDirectPeer("space-peer", PairingDirection::Either).unwrap_err();
+        assert_eq!(error.code, "CORE_NODE_REVOKED");
+    }
     /// A handoff must use the admitted peer sync surface, never the local-only application target.
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn route_handoff_installs_binding_through_peer_sync() {
@@ -3725,13 +3754,39 @@ mod tests {
         installTestRuntimeScheduler();
         let router = testCoreNodeRouter("grant-local", "grant-peer", "grant-binding");
         let worker = crate::SpacePersistenceSyncService::SpacePersistenceSyncService::new(
-            router.localCore.clone(), router.clone(), router.spaceStore.clone(),
+            router.localCore.clone(),
+            router.clone(),
+            router.spaceStore.clone(),
         );
-        let before = router.localCore.runtimeStorageHost().readBytes("runtime/sync/clocks.json").unwrap();
+        let before = router
+            .localCore
+            .runtimeStorageHost()
+            .readBytes("runtime/sync/clocks.json")
+            .unwrap();
         assert!(!worker.storageReplicationAllowed("grant-peer").unwrap());
         grantTestReplicaRole(&router.networkControlStore, "grant-peer");
+        let afterGrant = router
+            .localCore
+            .runtimeStorageHost()
+            .readBytes("runtime/sync/clocks.json")
+            .unwrap();
+        let beforeClock: operit_store::SyncOperationStore::SyncClock =
+            serde_json::from_slice(&before).unwrap();
+        let afterClock: operit_store::SyncOperationStore::SyncClock =
+            serde_json::from_slice(&afterGrant).unwrap();
+        // Role definition and assignment are two new authoritative commands.
+        let mut expected = beforeClock.clone();
+        expected.setSequence("grant-local", beforeClock.sequenceFor("grant-local") + 2);
+        assert_eq!(afterClock, expected);
         assert!(worker.storageReplicationAllowed("grant-peer").unwrap());
-        assert_eq!(router.localCore.runtimeStorageHost().readBytes("runtime/sync/clocks.json").unwrap(), before);
+        assert_eq!(
+            router
+                .localCore
+                .runtimeStorageHost()
+                .readBytes("runtime/sync/clocks.json")
+                .unwrap(),
+            afterGrant
+        );
     }
 
     /// Creates one real router with synthetic local runtime and in-memory route state.

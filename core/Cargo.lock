@@ -464,12 +464,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "constant_time_eq"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
-
-[[package]]
 name = "convert_case"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -796,6 +790,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "fs2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]
@@ -1885,6 +1889,7 @@ dependencies = [
 name = "operit-host-native-storage"
 version = "0.1.0"
 dependencies = [
+ "fs2",
  "operit-host-api",
  "rusqlite",
  "uuid",
@@ -1893,7 +1898,7 @@ dependencies = [
 
 [[package]]
 name = "operit-js-bridge"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "base64",
@@ -1932,7 +1937,7 @@ dependencies = [
 
 [[package]]
 name = "operit-local-models"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "bzip2",
  "bzip2-rs",
@@ -1948,7 +1953,7 @@ dependencies = [
 
 [[package]]
 name = "operit-model"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chrono",
  "operit-host-api",
@@ -2029,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chacha20poly1305",
  "chrono",
@@ -2053,7 +2058,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-codegen"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "operit-proxy-scan",
  "operit-rslink-codegen",
@@ -2065,7 +2070,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-ipc"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "async-trait",
  "operit-host-api",
@@ -2077,7 +2082,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-ipc-bridge"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "operit-host-api",
  "operit-link",
@@ -2086,7 +2091,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-macros"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "quote",
  "syn 2.0.117",
@@ -2110,7 +2115,7 @@ dependencies = [
 
 [[package]]
 name = "operit-providers"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "async-trait",
  "base64",
@@ -2248,7 +2253,7 @@ dependencies = [
 
 [[package]]
 name = "operit-runtime"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "async-trait",
@@ -2323,7 +2328,7 @@ dependencies = [
 
 [[package]]
 name = "operit-tools"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "async-trait",
@@ -2362,7 +2367,7 @@ dependencies = [
 
 [[package]]
 name = "operit-util"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chrono",
  "flate2",
@@ -2373,16 +2378,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "zip",
-]
-
-[[package]]
-name = "pbkdf2"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ed6a7761f76e3b9f92dfb0a60a6a6477c61024b775147ff0973a02653abaf2"
-dependencies = [
- "digest",
- "hmac",
 ]
 
 [[package]]
@@ -4015,6 +4010,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "winapi"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
+dependencies = [
+ "winapi-i686-pc-windows-gnu",
+ "winapi-x86_64-pc-windows-gnu",
+]
+
+[[package]]
+name = "winapi-i686-pc-windows-gnu"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
+
+[[package]]
 name = "winapi-util"
 version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4022,6 +4033,12 @@ checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "winapi-x86_64-pc-windows-gnu"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows-core"
@@ -4427,20 +4444,6 @@ name = "zeroize"
 version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97154e67e32c85465826e8bcc1c59429aaaf107c1e4a9e53c8d8ccd5eff88d0"
-dependencies = [
- "zeroize_derive",
-]
-
-[[package]]
-name = "zeroize_derive"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
 
 [[package]]
 name = "zerotrie"
@@ -4483,21 +4486,14 @@ version = "2.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fabe6324e908f85a1c52063ce7aa26b68dcb7eb6dbc83a2d148403c9bc3eba50"
 dependencies = [
- "aes",
  "arbitrary",
- "constant_time_eq",
  "crc32fast",
  "crossbeam-utils",
  "displaydoc",
  "flate2",
- "getrandom 0.3.4",
- "hmac",
  "indexmap",
  "memchr",
- "pbkdf2",
- "sha1",
  "thiserror 2.0.18",
- "zeroize",
  "zopfli",
 ]
 

@@ -812,7 +812,6 @@ function assertMemorySpace(value) {
     requireId(link.id, "link id");
     const source = requireId(link.sourceMemoryId, "source memory id"), target = requireId(link.targetMemoryId, "target memory id");
     if (!memoryIds.has(source) || !memoryIds.has(target)) throw new Error("Relationship references a missing memory: " + link.id);
-    if (source === target) throw new Error("Relationship cannot point to itself");
     assertString(link.type_, "link type");
     assertNumber(link.weight, "link weight", 0, 1);
     assertString(link.description, "link description");
@@ -830,7 +829,6 @@ function assertMemorySpace(value) {
     if (indices.has(identity)) throw new Error("Duplicate document chunk index");
     indices.add(identity);
   }
-  const candidateSources = /* @__PURE__ */ new Set();
   for (const candidate of value.candidates) {
     assertObject(candidate, "candidate");
     requireId(candidate.id, "candidate id");
@@ -840,9 +838,6 @@ function assertMemorySpace(value) {
     if (candidate.status !== "pending" && candidate.status !== "processing" && candidate.status !== "failed") throw new Error("Invalid candidate status");
     if (candidate.sourceType !== "reply_finalized_auto" && candidate.sourceType !== "selected_user_message") throw new Error("Invalid candidate source type");
     if (typeof candidate.triggerVariantIndex !== "number" || candidate.triggerVariantIndex > 2147483647) throw new Error("Candidate message variant exceeds the host range");
-    const sourceKey = JSON.stringify([candidate.chatId, candidate.triggerMessageTimestamp, candidate.triggerVariantIndex, candidate.sourceType]);
-    if (candidateSources.has(sourceKey)) throw new Error("Duplicate persisted candidate source");
-    candidateSources.add(sourceKey);
   }
   assertMemorySettings(value.settings);
   assertSearchConfig(value.searchConfig);

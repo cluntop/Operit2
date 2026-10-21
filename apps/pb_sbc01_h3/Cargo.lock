@@ -886,6 +886,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "futures-channel"
 version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2023,6 +2033,7 @@ dependencies = [
 name = "operit-host-native-storage"
 version = "0.1.0"
 dependencies = [
+ "fs2",
  "operit-host-api",
  "rusqlite",
  "uuid",
@@ -2031,7 +2042,7 @@ dependencies = [
 
 [[package]]
 name = "operit-js-bridge"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "base64",
@@ -2063,7 +2074,7 @@ dependencies = [
 
 [[package]]
 name = "operit-local-models"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "bzip2-rs",
  "operit-host-api",
@@ -2077,7 +2088,7 @@ dependencies = [
 
 [[package]]
 name = "operit-model"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chrono",
  "operit-host-api",
@@ -2165,7 +2176,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chacha20poly1305",
  "chrono",
@@ -2188,7 +2199,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-codegen"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "operit-rslink-codegen",
  "quote",
@@ -2199,7 +2210,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-ipc"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "async-trait",
  "operit-host-api",
@@ -2210,7 +2221,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-ipc-bridge"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "operit-host-api",
  "operit-link",
@@ -2219,7 +2230,7 @@ dependencies = [
 
 [[package]]
 name = "operit-plugin-sdk-macros"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "quote",
  "syn 2.0.119",
@@ -2242,7 +2253,7 @@ dependencies = [
 
 [[package]]
 name = "operit-providers"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "async-trait",
  "base64",
@@ -2375,7 +2386,7 @@ dependencies = [
 
 [[package]]
 name = "operit-runtime"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "async-trait",
@@ -2445,7 +2456,7 @@ dependencies = [
 
 [[package]]
 name = "operit-tools"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "aes",
  "async-trait",
@@ -2480,7 +2491,7 @@ dependencies = [
 
 [[package]]
 name = "operit-util"
-version = "2.0.0-preview.15"
+version = "2.0.0-preview.17"
 dependencies = [
  "chrono",
  "flate2",

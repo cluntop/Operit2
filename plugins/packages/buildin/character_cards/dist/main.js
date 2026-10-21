@@ -129,6 +129,7 @@ __export(main_exports, {
   memoryUserWriteApi: () => memoryUserWriteApi,
   onActivePromptCommand: () => onActivePromptCommand,
   onCharacterCommand: () => onCharacterCommand,
+  onChatViewTheme: () => onChatViewTheme,
   onGroupCommand: () => onGroupCommand,
   onGroupInputSubmit: () => onGroupInputSubmit,
   onMemoryCommand: () => onMemoryCommand,
@@ -165,6 +166,14 @@ var import_index_ui6 = __toESM(require("./ui/chat-sidebar/index.ui.js"));
 var import_index_ui7 = __toESM(require("./ui/selection/index.ui.js"));
 var import_index_ui8 = __toESM(require("./ui/chat-input-menu/index.ui.js"));
 var import_index_ui9 = __toESM(require("./ui/group-execution/index.ui.js"));
+
+// src/model-binding.ts
+function characterModelBindingMode(mode) {
+  return mode === "FIXED_CONFIG" ? "FIXED_MODEL" : mode;
+}
+function sameCharacterModelBinding(left, right) {
+  return left.chatModelBindingMode === right.chatModelBindingMode && left.chatProviderId === right.chatProviderId && left.chatModelId === right.chatModelId;
+}
 
 // src/identity.ts
 function uuid() {
@@ -1060,7 +1069,7 @@ function chatParticipant(card, request, service) {
     nonblank(card.name, "profile.name");
     const models = yield service.listModels();
     let modelBinding;
-    switch (card.chatModelBindingMode) {
+    switch (characterModelBindingMode(card.chatModelBindingMode)) {
       case "FOLLOW_GLOBAL":
         modelBinding = { ...request.defaultModelBinding };
         break;
@@ -1078,7 +1087,7 @@ function chatParticipant(card, request, service) {
         break;
       }
       default:
-        throw new Error("Invalid model binding mode: " + card.chatModelBindingMode);
+        throw new Error("\u89D2\u8272\u5361\u201C" + card.name + "\u201D\u7684\u6A21\u578B\u7ED1\u5B9A\u6A21\u5F0F\u65E0\u6548\uFF0C\u8BF7\u5728\u89D2\u8272\u5361\u8BBE\u7F6E\u4E2D\u91CD\u65B0\u7ED1\u5B9A\u6A21\u578B\uFF1A" + card.chatModelBindingMode);
     }
     const resolvedModels = models.filter(
       /** Requires the actual configured provider/model pair. */
@@ -1733,10 +1742,7 @@ function assertCharacterState(value) {
     assertCard(card);
     requireId(card.id, "card id");
     for (const id2 of card.attachedTagIds) if (!tagIds.has(id2)) throw new Error("Missing attached tag: " + id2);
-    if (card.chatModelBindingMode !== "FOLLOW_GLOBAL" && card.chatModelBindingMode !== "FIXED_MODEL") throw new Error("Invalid model binding mode");
-    if (card.chatModelBindingMode === "FIXED_MODEL") requireId(card.chatModelId, "fixed model id");
     if (card.memoryBindingMode !== "CHARACTER" && card.memoryBindingMode !== "SHARED") throw new Error("Invalid memory binding mode");
-    if (card.memoryBindingMode === "SHARED" && !storeIds.has(requireId(card.sharedMemoryId, "shared memory id"))) throw new Error("Missing primary shared library");
     for (const mount2 of card.sharedMemoryMounts) if (!storeIds.has(mount2.sharedMemoryId)) throw new Error("Missing shared memory mount: " + mount2.sharedMemoryId);
   }
   for (const group of groups) {
@@ -1763,7 +1769,7 @@ function assertCharacterState(value) {
   const selected = value.active[activeKey];
   assertObject(selected, "active selection");
   const activeId = requireId(selected.id, "active id");
-  if (activeKey === "Model" ? activeId !== "chat" : !(activeKey === "CharacterCard" ? cardIds : groupIds).has(activeId)) throw new Error("Active prompt references a missing entity: " + activeId);
+  if (activeKey === "Model" && activeId !== "chat") throw new Error("Invalid active model selection: " + activeId);
   const expectedOwners = /* @__PURE__ */ new Set();
   for (const id2 of cardIds) expectedOwners.add("character:" + id2);
   for (const id2 of storeIds) expectedOwners.add("shared:" + id2);
@@ -1799,7 +1805,6 @@ function assertMemorySpace(value) {
     requireId(link2.id, "link id");
     const source = requireId(link2.sourceMemoryId, "source memory id"), target = requireId(link2.targetMemoryId, "target memory id");
     if (!memoryIds.has(source) || !memoryIds.has(target)) throw new Error("Relationship references a missing memory: " + link2.id);
-    if (source === target) throw new Error("Relationship cannot point to itself");
     assertString(link2.type_, "link type");
     assertNumber(link2.weight, "link weight", 0, 1);
     assertString(link2.description, "link description");
@@ -1817,7 +1822,6 @@ function assertMemorySpace(value) {
     if (indices.has(identity3)) throw new Error("Duplicate document chunk index");
     indices.add(identity3);
   }
-  const candidateSources = /* @__PURE__ */ new Set();
   for (const candidate of value.candidates) {
     assertObject(candidate, "candidate");
     requireId(candidate.id, "candidate id");
@@ -1827,9 +1831,6 @@ function assertMemorySpace(value) {
     if (candidate.status !== "pending" && candidate.status !== "processing" && candidate.status !== "failed") throw new Error("Invalid candidate status");
     if (candidate.sourceType !== "reply_finalized_auto" && candidate.sourceType !== "selected_user_message") throw new Error("Invalid candidate source type");
     if (typeof candidate.triggerVariantIndex !== "number" || candidate.triggerVariantIndex > 2147483647) throw new Error("Candidate message variant exceeds the host range");
-    const sourceKey = JSON.stringify([candidate.chatId, candidate.triggerMessageTimestamp, candidate.triggerVariantIndex, candidate.sourceType]);
-    if (candidateSources.has(sourceKey)) throw new Error("Duplicate persisted candidate source");
-    candidateSources.add(sourceKey);
   }
   assertMemorySettings(value.settings);
   assertSearchConfig(value.searchConfig);
@@ -1963,7 +1964,7 @@ function records(state) {
   }
   return result2;
 }
-function stateFromRecords(metadata, rows) {
+function decodeStateFromRecords(metadata, rows) {
   assertObject(metadata, "character database metadata");
   if (metadata.migrationStatus === "writing" || metadata.legacyImportPending === true)
     throw new Error("Character migration has not completed");
@@ -2022,6 +2023,10 @@ function stateFromRecords(metadata, rows) {
     }
     entries.push(row.value.record);
   }
+  return state;
+}
+function stateFromRecords(metadata, rows) {
+  const state = decodeStateFromRecords(metadata, rows);
   assertCharacterState(state);
   return state;
 }
@@ -2064,7 +2069,9 @@ function absolute(directory, relative) {
 }
 function ownerFiles(directory, source, destination) {
   return __async(this, null, function* () {
-    const listing = yield Tools.Files.list(absolute(directory, source));
+    const path = absolute(directory, source);
+    if (!(yield Tools.Files.exists(path)).exists) return [];
+    const listing = yield Tools.Files.list(path);
     const result2 = [];
     for (const entry of listing.entries) {
       if (entry.name === "." || entry.name === ".." || /[/\\:\u0000-\u001f]/u.test(entry.name))
@@ -2075,6 +2082,22 @@ function ownerFiles(directory, source, destination) {
     }
     return result2;
   });
+}
+function removeDeletedReferences(state) {
+  const tags = new Set(state.tags.map((tag) => tag.id));
+  const stores = new Set(state.stores.map((store) => store.id));
+  const cards = new Set(state.cards.map((card) => card.id));
+  for (const card of state.cards) {
+    card.attachedTagIds = card.attachedTagIds.filter((id2) => tags.has(id2));
+    card.sharedMemoryMounts = card.sharedMemoryMounts.filter((mount2) => stores.has(mount2.sharedMemoryId));
+  }
+  for (const group of state.groups) group.members = group.members.filter((member2) => cards.has(member2.characterCardId));
+  for (const owner2 of state.owners) {
+    const memories = new Set(owner2.memories.map((memory) => memory.id));
+    const documents2 = new Set(owner2.memories.filter((memory) => memory.isDocumentNode).map((memory) => memory.uuid));
+    owner2.links = owner2.links.filter((link2) => memories.has(link2.sourceMemoryId) && memories.has(link2.targetMemoryId));
+    owner2.chunks = owner2.chunks.filter((chunk) => documents2.has(chunk.memoryUuid));
+  }
 }
 function prepareVersionOne(storage, metadata, directory) {
   return __async(this, null, function* () {
@@ -2088,7 +2111,8 @@ function prepareVersionOne(storage, metadata, directory) {
     }
     const inputMetadata = { ...metadata, version: 1 };
     delete inputMetadata.legacyImportPending;
-    const state = stateFromRecords(inputMetadata, input);
+    const state = decodeStateFromRecords(inputMetadata, input);
+    removeDeletedReferences(state);
     const before = records(state), identities2 = {};
     function identity3(scope, value) {
       requireId(value, scope + " identity");
@@ -2101,25 +2125,29 @@ function prepareVersionOne(storage, metadata, directory) {
       if (!Object.prototype.hasOwnProperty.call(identities2, key)) throw new Error("Missing migration reference: " + key);
       return identities2[key];
     }
+    const sourceStoreIds = new Set(state.stores.map((store) => store.id));
+    const sourceCardIds = new Set(state.cards.map((card) => card.id));
+    const sourceGroupIds = new Set(state.groups.map((group) => group.id));
     for (const collection of configurationNames)
       for (const record2 of state[collection]) record2.id = identity3(collection, record2.id);
     function selection(value) {
-      if (value === "model:chat") return value;
-      if (value.startsWith("card:")) return "card:" + reference("cards", value.slice(5));
-      if (value.startsWith("group:")) return "group:" + reference("groups", value.slice(6));
-      throw new Error("Invalid migration selection: " + value);
+      const parsed = parseChatSelection(value);
+      if (parsed.kind === "card" && sourceCardIds.has(parsed.id)) value = "card:" + reference("cards", parsed.id);
+      if (parsed.kind === "group" && sourceGroupIds.has(parsed.id)) value = "group:" + reference("groups", parsed.id);
+      return value;
     }
     for (const card of state.cards) {
       card.attachedTagIds = card.attachedTagIds.map((id2) => reference("tags", id2));
-      if (card.sharedMemoryId !== null) card.sharedMemoryId = reference("stores", card.sharedMemoryId);
+      if (card.sharedMemoryId !== null && sourceStoreIds.has(card.sharedMemoryId)) card.sharedMemoryId = reference("stores", card.sharedMemoryId);
       for (const mount2 of card.sharedMemoryMounts) mount2.sharedMemoryId = reference("stores", mount2.sharedMemoryId);
     }
     for (const group of state.groups)
       for (const member2 of group.members) member2.characterCardId = reference("cards", member2.characterCardId);
-    for (const group of state.conversationGroups)
-      if (group.ownerSelection !== null) group.ownerSelection = selection(group.ownerSelection);
-    if ("CharacterCard" in state.active) state.active.CharacterCard.id = reference("cards", state.active.CharacterCard.id);
-    if ("CharacterGroup" in state.active) state.active.CharacterGroup.id = reference("groups", state.active.CharacterGroup.id);
+    for (const group of state.conversationGroups) {
+      if (group.ownerSelection !== null && /^(card|group):/u.test(group.ownerSelection)) group.ownerSelection = selection(group.ownerSelection);
+    }
+    if ("CharacterCard" in state.active && sourceCardIds.has(state.active.CharacterCard.id)) state.active.CharacterCard.id = reference("cards", state.active.CharacterCard.id);
+    if ("CharacterGroup" in state.active && sourceGroupIds.has(state.active.CharacterGroup.id)) state.active.CharacterGroup.id = reference("groups", state.active.CharacterGroup.id);
     const directories = [];
     for (const owner2 of state.owners) {
       const old = owner2.ownerKey;
@@ -2143,16 +2171,24 @@ function prepareVersionOne(storage, metadata, directory) {
       for (const chunk of owner2.chunks) chunk.memoryUuid = reference(scope + "/memoryUuid", chunk.memoryUuid);
       if (owner2.rebuildTask !== null) owner2.rebuildTask.id = identity3(scope + "/rebuildTask", owner2.rebuildTask.id);
     }
+    const resourceMoves = [];
+    for (const move of directories) {
+      resourceMoves.push(move, { source: absolute(directory, move.source), destination: absolute(directory, move.destination) });
+    }
     for (const owner2 of state.owners) for (const memory of owner2.memories)
       for (const field of ["documentPath", "chunkIndexFilePath"]) {
         const path = memory[field];
         if (path === null) continue;
-        for (const move of directories) if (path.startsWith(move.source + "/")) {
+        const source = path.startsWith("owners/") ? absolute(directory, path) : path;
+        if (!(yield Tools.Files.exists(source)).exists) {
+          memory[field] = null;
+          continue;
+        }
+        for (const move of resourceMoves) if (path.startsWith(move.source + "/")) {
           memory[field] = move.destination + path.slice(move.source.length);
           break;
         }
       }
-    assertCharacterState(state);
     const after = records(state), changes2 = [];
     const original = new Map(rows.map((row) => [JSON.stringify([row.collection, row.key]), row]));
     const targets = /* @__PURE__ */ new Set();
@@ -2172,6 +2208,9 @@ function prepareVersionOne(storage, metadata, directory) {
         ]);
       }
     }
+    const retained2 = new Set(before.map((row) => JSON.stringify([row.collection, row.key])));
+    for (const row of rows) if (!retained2.has(JSON.stringify([row.collection, row.key])))
+      changes2.push([{ op: "delete", collection: row.collection, key: row.key, expectedValue: row.value }]);
     for (const [key, originalValue] of (yield storage.chats.data()).entries()) {
       const collection = key.startsWith("binding_") ? "chat_bindings" : key.startsWith("draft_") ? "chat_drafts" : null;
       if (collection === null) throw new Error("Unsupported chat preference during migration: " + key);
@@ -2184,7 +2223,6 @@ function prepareVersionOne(storage, metadata, directory) {
     const files = [];
     for (const move of directories) {
       const entries = yield ownerFiles(directory, move.source, move.destination);
-      if (!entries.some((entry) => entry.source === move.source + "/USER.md")) throw new Error("Missing source owner USER.md: " + move.source);
       files.push(...entries);
     }
     const authors = [];
@@ -2200,8 +2238,7 @@ function prepareVersionOne(storage, metadata, directory) {
           assertObject(extension, "legacy message author");
           if (Object.keys(extension).length !== 1) throw new Error("Invalid legacy message author");
           const participant = requireId(extension.participantId, "legacy participant id"), next = cardIds.get(participant);
-          if (next === void 0) throw new Error("Missing message author character: " + participant);
-          if (next !== participant) authors.push({ target, before: participant, after: next });
+          if (next !== void 0 && next !== participant) authors.push({ target, before: participant, after: next });
         }
       }
     }
@@ -2289,10 +2326,16 @@ function migrateLegacyToV1(storage, preferences, directory, source) {
             if (!exists.exists) {
               completed(yield Tools.Files.mkdir(destination.slice(0, destination.lastIndexOf("/")), true));
               completed(yield Tools.Files.copy(absolute(directory, file.source), destination, false));
-            }
-            yield verifyFile(directory, file);
+            } else yield verifyFile(directory, file);
             plan.cursor += 1;
             yield publish();
+          }
+          for (const move of plan.directories) {
+            const document2 = absolute(directory, move.destination + "/USER.md");
+            if (!(yield Tools.Files.exists(document2)).exists) {
+              completed(yield Tools.Files.mkdir(document2.slice(0, document2.lastIndexOf("/")), true));
+              completed(yield Tools.Files.write(document2, ""));
+            }
           }
           plan.phase = "authors";
           plan.cursor = 0;
@@ -2304,8 +2347,6 @@ function migrateLegacyToV1(storage, preferences, directory, source) {
             if (extension === null || Object.keys(extension).length !== 1 || extension.participantId !== author.before && extension.participantId !== author.after)
               throw new Error("Message author changed during character migration");
             if (extension.participantId === author.before) yield Tools.Chat.writeExtension(author.target, { participantId: author.after });
-            const written = yield Tools.Chat.readExtension(author.target);
-            if (!equal(written.extension, { participantId: author.after })) throw new Error("Message author migration verification failed");
             plan.cursor += 1;
             yield publish();
           }
@@ -2325,38 +2366,20 @@ function migrateLegacyToV1(storage, preferences, directory, source) {
             plan.cursor = cursor;
             yield publish();
           }
-          plan.phase = "verify";
-          plan.cursor = 0;
-          yield publish();
-          break;
-        case "verify": {
-          const rows = yield migrationRecords(storage);
-          const finalMetadata = { ...metadata, version: 1, active: plan.active };
-          delete finalMetadata.legacyImportPending;
-          stateFromRecords(finalMetadata, rows);
-          for (const group of plan.changes) for (const change of group) {
-            let value;
-            const name = configurationNames.find((name2) => name2 === change.collection);
-            if (name !== void 0) value = (yield storage.configuration[name].data()).get(recordPrefix + change.key);
-            else if (change.collection === "chat_bindings" || change.collection === "chat_drafts") value = (yield storage.chats.data()).get((change.collection === "chat_bindings" ? "binding_" : "draft_") + change.key);
-            else {
-              const entry = yield storage.memory.get(change.collection, change.key);
-              value = entry === null ? void 0 : entry.value;
-            }
-            if (change.op === "put" ? !equal(value, change.value) : value !== void 0)
-              throw new Error("Character schema record verification failed: " + change.key);
-          }
-          for (const file of plan.files) yield verifyFile(directory, file);
           plan.phase = "cleanup";
           plan.cursor = 0;
           yield publish();
           break;
-        }
+        // Retains the persisted phase name so interrupted released migrations can continue.
+        case "verify":
+          plan.phase = "cleanup";
+          plan.cursor = 0;
+          yield publish();
+          break;
         case "cleanup":
           for (; plan.cursor < plan.directories.length; ) {
             const source2 = absolute(directory, plan.directories[plan.cursor].source);
             if ((yield Tools.Files.exists(source2)).exists) {
-              for (const file of plan.files) if (file.source.startsWith(plan.directories[plan.cursor].source + "/")) yield verifyFile(directory, file);
               completed(yield Tools.Files.deleteFile(source2, true));
             }
             plan.cursor += 1;
@@ -2388,7 +2411,7 @@ function migrateCharacterSchema(storage, preferences, directory) {
 
 // src/storage/memory-merge.json
 var memory_merge_default = {
-  version: 3,
+  version: 4,
   maxEntities: 1,
   maxReferences: 48,
   entities: [
@@ -3386,9 +3409,8 @@ function enqueueCandidate(input, repository) {
         /** Uses the full owner-scoped source identity for genuine hook idempotency. */
         (candidate) => candidate.chatId === input.chatId && candidate.triggerMessageTimestamp === input.timestamp && candidate.triggerVariantIndex === input.variantIndex && candidate.sourceType === input.sourceType
       );
-      if (previous.length > 1) throw new Error("Duplicate persisted memory candidate source");
-      if (previous.length === 1) {
-        result2.candidateIds.push(previous[0].id);
+      if (previous.length !== 0) {
+        for (const candidate of previous) result2.candidateIds.push(candidate.id);
         continue;
       }
       const id2 = yield repository.allocateRecordId();
@@ -4198,7 +4220,8 @@ var handlers = {
   "activePrompt.resolvedCard": (_input, host) => __async(null, null, function* () {
     const active = yield host.readActive();
     if (!("CharacterCard" in active)) throw new Error("An active group requires an explicit execution participant");
-    return { id: active.CharacterCard.id };
+    const card = yield host.getCharacter(active.CharacterCard.id);
+    return { id: card.id };
   }),
   /** Reads complete canonical tags. */
   "tag.list": (_input, host) => __async(null, null, function* () {
@@ -4574,6 +4597,7 @@ function isSelectionOperation(operation) {
   switch (operation) {
     case "character.setActive":
     case "group.setActive":
+    case "activePrompt.setModel":
     case "activePrompt.setCard":
     case "activePrompt.setGroup":
     case "activePrompt.activateForChat":
@@ -4600,6 +4624,9 @@ function editorSelection(request) {
 function domainSelection(operation, input, repository) {
   return __async(this, null, function* () {
     switch (operation) {
+      case "activePrompt.setModel":
+        parseDomainPayload("activePrompt.setModel", input);
+        return "model:chat";
       case "character.setActive":
       case "activePrompt.setCard":
         return "card:" + parseDomainPayload("activePrompt.setCard", input).id;
@@ -4789,6 +4816,26 @@ function createCharacterCardsService(owner2, configurations = independentConfigu
     );
   }
   const service = {
+    /** Applies the exact persisted actor through the same validated operations used by explicit selection. */
+    activateChatSelection(chatId) {
+      return __async(this, null, function* () {
+        requireId(chatId, "chat id");
+        const binding = yield findChatBinding(chatId);
+        if (binding === null) return;
+        const selection = parseChatSelection(binding.selection);
+        switch (selection.kind) {
+          case "card":
+            yield service.dispatchDomain("activePrompt.setCard", { id: selection.id });
+            break;
+          case "group":
+            yield service.dispatchDomain("activePrompt.setGroup", { id: selection.id });
+            break;
+          case "model":
+            yield service.dispatchDomain("activePrompt.setModel", {});
+            break;
+        }
+      });
+    },
     /** Runs the private job scheduler without constructing another store or business service. */
     runMemoryJobs: () => jobs.tick(),
     /** Reads only the metadata flags needed by prompt composition. */
@@ -5081,17 +5128,18 @@ function commitTagChanges(plan, host) {
     return normalizeNames(ids);
   });
 }
-function normalizedCharacter(card) {
-  if (card.chatModelBindingMode !== "FOLLOW_GLOBAL" && card.chatModelBindingMode !== "FIXED_MODEL")
-    throw new Error("\u804A\u5929\u6A21\u578B\u7ED1\u5B9A\u6A21\u5F0F\u65E0\u6548");
-  if (card.memoryBindingMode !== "CHARACTER" && card.memoryBindingMode !== "SHARED")
-    throw new Error("\u8BB0\u5FC6\u7ED1\u5B9A\u6A21\u5F0F\u65E0\u6548");
-  if (card.chatModelBindingMode === "FIXED_MODEL") {
+function assertCharacterModelBinding(card) {
+  const mode = characterModelBindingMode(card.chatModelBindingMode);
+  if (mode !== "FOLLOW_GLOBAL" && mode !== "FIXED_MODEL")
+    throw new Error("\u804A\u5929\u6A21\u578B\u7ED1\u5B9A\u6A21\u5F0F\u65E0\u6548\uFF0C\u8BF7\u91CD\u65B0\u7ED1\u5B9A\u6A21\u578B");
+  if (mode === "FIXED_MODEL") {
     requireId(card.chatProviderId, "\u56FA\u5B9A\u804A\u5929\u6A21\u578B\u63D0\u4F9B\u5546");
     requireId(card.chatModelId, "\u56FA\u5B9A\u804A\u5929\u6A21\u578B");
   }
-  if (card.memoryBindingMode === "SHARED")
-    requireId(card.sharedMemoryId, "\u5171\u4EAB\u8BB0\u5FC6\u5E93");
+}
+function normalizedCharacter(card) {
+  if (card.memoryBindingMode !== "CHARACTER" && card.memoryBindingMode !== "SHARED")
+    throw new Error("\u8BB0\u5FC6\u7ED1\u5B9A\u6A21\u5F0F\u65E0\u6548");
   if (card.ttsConfigId !== null) requireId(card.ttsConfigId, "TTS \u914D\u7F6E");
   if (card.themeConfigId !== null) requireId(card.themeConfigId, "\u4E3B\u9898\u914D\u7F6E");
   const policy = card.toolAccessConfig;
@@ -5132,12 +5180,16 @@ function saveCharacter(card, create, tagChanges, host) {
     assertCard(card);
     assertBoolean(create, "\u89D2\u8272\u65B0\u5EFA\u6807\u8BC6");
     let value = normalizedCharacter(card);
+    let validateMemoryBinding = create;
     if (create) {
+      assertCharacterModelBinding(value);
       value = { ...value, id: "", createdAt: 0, updatedAt: 0 };
     } else {
       const id2 = requireId(value.id, "\u89D2\u8272\u5361\u6807\u8BC6");
       const original = yield host.getCharacter(id2);
       assertCard(original);
+      if (!sameCharacterModelBinding(original, value)) assertCharacterModelBinding(value);
+      validateMemoryBinding = original.memoryBindingMode !== value.memoryBindingMode || original.sharedMemoryId !== value.sharedMemoryId;
       value = {
         ...value,
         id: original.id,
@@ -5168,7 +5220,7 @@ function saveCharacter(card, create, tagChanges, host) {
     records2(tags, assertTag, "\u6807\u7B7E\u5217\u8868");
     records2(stores, assertStore, "\u5171\u4EAB\u8BB0\u5FC6\u5E93\u5217\u8868");
     const plan = prepareTagChanges(value.attachedTagIds, tagChanges, tags);
-    if (value.memoryBindingMode === "SHARED")
+    if (validateMemoryBinding && value.memoryBindingMode === "SHARED")
       findRecord(
         stores,
         requireId(value.sharedMemoryId, "\u5171\u4EAB\u8BB0\u5FC6\u5E93\u6807\u8BC6"),
@@ -10433,6 +10485,18 @@ function registerSidebarChannel() {
   ToolPkg.ipc.on("character-sidebar.catalog", readSidebarCatalog);
 }
 
+// src/chat-view-theme.ts
+function onChatViewTheme(event) {
+  return __async(this, null, function* () {
+    if (event.eventName !== "view_opened") return;
+    const chatId = requireId(event.eventPayload.chatId, "opened chat id");
+    yield (yield getService()).activateChatSelection(chatId);
+  });
+}
+function registerChatViewTheme() {
+  ToolPkg.registerChatViewHook({ id: "character-bound-theme", function: onChatViewTheme });
+}
+
 // src/main.ts
 connectDirectorySources({
   /** Reads the actual configured model directory only when the shared service requests it. */
@@ -10456,6 +10520,7 @@ function registerToolPkg() {
   registerMemoryJobHooks();
   registerToolPolicies();
   registerChatInitialization();
+  registerChatViewTheme();
   registerGroupExecutionHooks();
   registerUiContributionApis();
   ToolPkg.registerApi({ name: "chat.sidebar.prepare", function: chatSidebarPrepareApi });
