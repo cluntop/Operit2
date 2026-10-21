@@ -155,7 +155,7 @@ jobs:
       - name: Prepare TypeScript toolchain
         shell: pwsh
         run: |
-          $env:PYTHONPATH = "."
+          $env:PYTHONPATH = "$env:GITHUB_WORKSPACE;$env:GITHUB_WORKSPACE\tools\build_scripts"
           python -c "from tools.build_scripts.common import ensure_typescript; ensure_typescript('5.8.3')"
           $tsc = ".ci-tools\typescript\node_modules\.bin\tsc.cmd"
           if (-not (Test-Path $tsc)) { throw "tsc not found at $tsc" }
@@ -267,6 +267,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: operit2-android-${{ github.sha }}
-          path: tools/release/dist/operit2-app-android-arm64-v8a-*.apk
+          path: tools/release/dist/operit2-app-android-arm64-v8a.apk
           if-no-files-found: error
           retention-days: 14
