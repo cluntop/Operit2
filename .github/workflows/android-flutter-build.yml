@@ -269,6 +269,18 @@ jobs:
           } else {
             Write-Host "No $req found, skipping Python deps."
           }
+      
+      - name: Show gradle invocation of prepare_android_v8
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
+            Select-String -Pattern "prepare_android_v8|prepareAndroidV8" -Context 5,5 |
+            ForEach-Object {
+              Write-Host "=== $($_.Path):$($_.LineNumber) ==="
+              $_.Context.PreContext
+              $_.Line
+              $_.Context.PostContext
+            }
 
       - name: Build and package Android app
         shell: pwsh
