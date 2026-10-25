@@ -2549,6 +2549,27 @@ pub struct LoadingIndicatorProps {
     pub size: Option<f64>,
     pub color: Option<ComposeColor>,
 }
+/// Controlled Material slider with explicit bounds and independent drag completion.
+pub struct SliderProps {
+    /// Shared layout and identity properties.
+    pub base_compose_common_props: ComposeCommonProps,
+    /// Current value within the declared bounds.
+    pub value: f64,
+    /// Inclusive lower bound.
+    pub min: f64,
+    /// Inclusive upper bound.
+    pub max: f64,
+    /// Optional number of evenly spaced intervals.
+    pub divisions: Option<i32>,
+    /// Value label shown during interaction.
+    pub label: Option<String>,
+    /// Whether the slider accepts interaction.
+    pub enabled: Option<bool>,
+    /// Receives each local value change.
+    pub onValueChange: Arc<dyn Fn(f64) -> () + Send + Sync>,
+    /// Receives the final drag value for durable settings writes.
+    pub onValueChangeFinished: Option<Arc<dyn Fn(f64) -> () + Send + Sync>>,
+}
 /// Controlled state and colors for a binary sliding switch.
 pub struct SwitchProps {
     /// Shared node layout, drawing, identity, and lifecycle properties.
@@ -2639,12 +2660,27 @@ pub struct IconButtonProps {
     /// Outline used for interaction feedback and clipping.
     pub shape: Option<ComposeShape>,
 }
+/// Global surface layer whose material treatment follows the host theme settings.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum ComposeThemeSurfaceLayer {
+    /// Broad background panels.
+    #[serde(rename = "panel")]
+    Panel,
+    /// Cards above the page background.
+    #[serde(rename = "card")]
+    Card,
+    /// Controls and rows nested inside a card.
+    #[serde(rename = "control")]
+    Control,
+}
 /// Elevated or outlined Material container for grouped content.
 pub struct CardProps {
     /// Shared node layout, drawing, identity, and lifecycle properties.
     pub base_compose_common_props: ComposeCommonProps,
     /// Child nodes rendered inside the card container.
     pub content: Option<ComposeChildren>,
+    /// Uses global transparency and blur for this layer; requires containerColor and has no elevation.
+    pub themeSurface: Option<ComposeThemeSurfaceLayer>,
     /// Background color of the card surface.
     pub containerColor: Option<ComposeColor>,
     /// Opacity multiplier applied to the card background.
@@ -2766,6 +2802,10 @@ pub struct SnackbarHostProps {
 pub struct AiChatProps {
     /// Shared node layout, drawing, identity, and lifecycle properties.
     pub base_compose_common_props: ComposeCommonProps,
+    /// Identifies the conversation shown in a local embedded chat runtime without changing the main selection.
+    pub chatId: Option<String>,
+    /// Controls the native composer; false leaves sending and cancellation to the surrounding workflow.
+    pub showInput: Option<bool>,
 }
 /// Properties for a responsive trailing panel controlled by the Compose screen.
 pub struct AdaptiveSidePanelProps {
@@ -3109,6 +3149,8 @@ pub struct ComposeUiFactoryRegistry {
     pub HorizontalPager: ComposeNodeFactory<HorizontalPagerProps>,
     /// Creates a controlled binary switch.
     pub Switch: ComposeNodeFactory<SwitchProps>,
+    /// Factory used to construct a bounded native Material slider.
+    pub Slider: ComposeNodeFactory<SliderProps>,
     /// Creates a controlled checkbox.
     pub Checkbox: ComposeNodeFactory<CheckboxProps>,
     /// Creates a standard Material button.

@@ -1,5 +1,7 @@
-// @operit-compose-artifact 2
+// @operit-compose-artifact 4
 "use strict";
+var __operitUiPrograms_=[{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:73561","root":0,"nodes":[{"type":"Icon","props":[2,["name","size","tint"],[[1,0],[0,16],[1,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:73683","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier","onClick"],[[1,0],[0,true],[0,12],[0,"center"],[1,1],[1,2]]],"children":[3,[[1,3],[4,1],[4,2],[4,3],[4,4],[4,5]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","color","maxLines","overflow","weight"],[[1,4],[0,"bodySmall"],[1,5],[0,1],[0,"ellipsis"],[0,1]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","color","fontWeight"],[[1,6],[0,"bodySmall"],[1,7],[0,"600"]]],"children":[0,null],"explicitChildren":false},{"type":"Spacer","props":[2,["width"],[[0,8]]],"children":[0,null],"explicitChildren":false},{"type":"Switch","props":[2,["checked","width","height","onCheckedChange"],[[1,8],[0,40],[0,28],[1,9]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:74453","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier"],[[0,"memory-recallLimit"],[0,true],[0,12],[0,"center"],[1,0]]],"children":[3,[[1,1],[4,1],[4,2],[4,3],[4,4]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","color","maxLines","overflow","weight"],[[1,2],[0,"bodySmall"],[1,3],[0,1],[0,"ellipsis"],[0,1]]],"children":[0,null],"explicitChildren":false},{"type":"Spacer","props":[2,["width"],[[0,8]]],"children":[0,null],"explicitChildren":false},{"type":"TextField","props":[2,["key","value","singleLine","placeholder","onValueChange","style","decoration","modifier"],[[0,"memory-recall-limit-input"],[1,4],[0,true],[1,5],[1,6],[2,["fontSize"],[[0,13]]],[2,["isDense","contentPadding"],[[0,true],[2,["vertical"],[[0,8]]]]],[1,7]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:75300","root":0,"nodes":[{"type":"Box","props":[2,["key"],[[0,"memory-menu-unavailable"]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:75383","root":0,"nodes":[{"type":"Box","props":[2,["key","onLoad"],[[0,"memory-menu-loading"],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:75461","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier","onClick"],[[0,"memory-section-header"],[0,true],[0,12],[0,"center"],[1,0],[1,1]]],"children":[3,[[1,2],[4,1],[4,2],[4,3],[4,4],[4,5],[4,7],[4,8]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style"],[[0,"记忆"],[0,"bodySmall"]]],"children":[0,null],"explicitChildren":false},{"type":"Spacer","props":[2,["width"],[[0,8]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","color","fontWeight","textAlign","maxLines","overflow","weight"],[[1,3],[0,"bodySmall"],[1,4],[0,"600"],[0,"end"],[0,1],[0,"ellipsis"],[0,1]]],"children":[0,null],"explicitChildren":false},{"type":"IconButton","props":[2,["key","tooltip","width","height","contentPadding","onClick","content"],[[0,"memory-info"],[0,"记忆状态说明"],[0,24],[0,28],[2,["horizontal","vertical"],[[0,0],[0,0]]],[1,5],[4,6]]],"children":[0,null],"explicitChildren":false},{"type":"Icon","props":[2,["name","size","tint"],[[0,"InfoOutline"],[0,16],[1,6]]],"children":[0,null],"explicitChildren":false},{"type":"Spacer","props":[2,["width"],[[0,6]]],"children":[0,null],"explicitChildren":false},{"type":"Icon","props":[2,["name","size","tint"],[[1,7],[0,20],[1,8]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:77427","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier","onClick"],[[0,"memory-manual"],[0,true],[0,12],[0,"center"],[1,0],[1,1]]],"children":[3,[[1,2],[4,1],[4,2]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","maxLines","overflow","weight","color"],[[1,3],[0,"bodySmall"],[0,2],[0,"ellipsis"],[0,1],[1,4]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:78279","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier","onClick"],[[0,"memory-retry-failed"],[0,true],[0,12],[0,"center"],[1,0],[1,1]]],"children":[3,[[1,2],[4,1],[4,2]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","maxLines","overflow","weight","color"],[[1,3],[0,"bodySmall"],[0,1],[0,"ellipsis"],[0,1],[1,4]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:78989","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","verticalAlignment","modifier","onClick"],[[0,"memory-clear-failed"],[0,true],[0,12],[0,"center"],[1,0],[1,1]]],"children":[3,[[1,2],[4,1],[4,2]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,12]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","maxLines","overflow","weight","color"],[[1,3],[0,"bodySmall"],[0,1],[0,"ellipsis"],[0,1],[1,4]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:79729","root":0,"nodes":[{"type":"Column","props":[2,["key","modifier"],[[0,"memory-section-children"],[1,0]]],"children":[1,1],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:1huretk:79856","root":0,"nodes":[{"type":"Column","props":[2,["key","fillMaxWidth"],[[0,"memory-section"],[0,true]]],"children":[1,0],"explicitChildren":true}]}];
+
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -45,12 +47,28 @@ __export(index_ui_exports, {
 });
 module.exports = __toCommonJS(index_ui_exports);
 
+// src/identity.ts
+function uuid() {
+  const bytes = [];
+  for (let index = 0; index < 16; index += 1) bytes.push(Math.floor(Math.random() * 256));
+  bytes[6] = bytes[6] & 15 | 64;
+  bytes[8] = bytes[8] & 63 | 128;
+  const text2 = bytes.map(
+    /** Encodes every byte as two hexadecimal digits. */
+    (byte) => byte.toString(16).padStart(2, "0")
+  ).join("");
+  return text2.slice(0, 8) + "-" + text2.slice(8, 12) + "-" + text2.slice(12, 16) + "-" + text2.slice(16, 20) + "-" + text2.slice(20);
+}
+
 // src/validation.ts
 function assertObject(value, label) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} \u5FC5\u987B\u662F\u5BF9\u8C61`);
 }
 function assertString(value, label) {
   if (typeof value !== "string") throw new Error(`${label} \u5FC5\u987B\u662F\u5B57\u7B26\u4E32`);
+}
+function assertBoolean(value, label) {
+  if (typeof value !== "boolean") throw new Error(`${label} \u5FC5\u987B\u662F\u5E03\u5C14\u503C`);
 }
 function assertNumber(value, label, min, max) {
   if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label} \u5FC5\u987B\u5728 ${min} \u5230 ${max} \u4E4B\u95F4`);
@@ -63,6 +81,22 @@ function requireId(value, label) {
   assertString(value, label);
   if (value.trim() === "" || value !== value.trim()) throw new Error(`${label} \u65E0\u6548`);
   return value;
+}
+
+// src/storage/state.ts
+function userDocumentPath(ownerKey) {
+  return "owners/" + encodeURIComponent(ownerKey) + "/USER.md";
+}
+var MEMORY_RECALL_LIMIT_RANGE = { min: 1, max: 50 };
+function normalizeMemoryRecallSettings(value) {
+  assertObject(value, "memory recall settings");
+  assertBoolean(value.enabled, "memory recall enabled");
+  if (value.limit !== void 0) {
+    assertInteger(value.limit, "memory recall limit", MEMORY_RECALL_LIMIT_RANGE.min);
+    if (value.limit > MEMORY_RECALL_LIMIT_RANGE.max) throw new Error("memory recall limit \u5FC5\u987B\u4E0D\u8D85\u8FC7 " + MEMORY_RECALL_LIMIT_RANGE.max);
+  }
+  if (value.allowRepeated !== void 0) assertBoolean(value.allowRepeated, "memory recall allow repeated");
+  return { enabled: value.enabled, limit: value.limit ?? 3, allowRepeated: value.allowRepeated ?? false };
 }
 
 // src/chat-bindings.ts
@@ -137,6 +171,10 @@ function number(value, path) {
 }
 function integer(value, path) {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) throw new Error(`${path} must be a safe integer`);
+}
+function nonnegativeInteger(value, path) {
+  integer(value, path);
+  nonnegative(value, path);
 }
 function messageVariant(value, path) {
   integer(value, path);
@@ -258,8 +296,10 @@ var contentOnly = shape({ content: required(text) });
 var format = enumeration("operit", "tavern");
 var memoryQueryRequest = shape({ participantId: required(nonblank), query: required(nonblank), limit: required(nonnegative), snapshotId: required(nullable(nonblank)) });
 var validators = {
-  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(text), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
+  "memory.chunks": shape({ ownerKey: required(owner), memoryId: required(nonblank), query: required(nonblank), count: required(nonnegativeInteger) }),
+  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(nonblank), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
   "memory.chat.list": ownerOnly,
+  "memory.chat.pruneMissing": ownerOnly,
   "memory.chat.update": shape({ ownerKey: required(owner), chatId: required(nonblank) }),
   "memory.categorize": ownerOnly,
   "memory.rebuild.start": shape({ ownerKey: required(owner), rebuild: required(shape({ chatIds: required(strings), windowMessageCount: required(integer), fromInclusive: required(nullable(integer)), toInclusive: required(nullable(integer)) })) }),
@@ -267,6 +307,8 @@ var validators = {
   "memory.rebuild.cancel": ownerOnly,
   "memory.embeddings.rebuild": ownerOnly,
   "memory.candidate.enqueue": shape({ chatId: required(nonblank), timestamp: required(integer), variantIndex: required(messageVariant), sourceType: required(enumeration("reply_finalized_auto", "selected_user_message")), ownerKey: required(nullable(owner)) }),
+  "memory.candidates.retryFailed": ownerOnly,
+  "memory.candidates.clearFailed": ownerOnly,
   "chat.configuration.resolve": parseChatConfigurationRequest,
   "chat.configuration.binding.read": shape({ chatId: required(nonblank) }),
   "chat.configuration.binding.write": shape({ chatId: required(nonblank), selection: required(nonblank) }),
@@ -352,19 +394,6 @@ function parseChatConfigurationRequest(value) {
     nonblank(request2.defaultTtsConfigId, "execution default TTS configuration");
   }
   return request2;
-}
-
-// src/identity.ts
-function uuid() {
-  const bytes = [];
-  for (let index = 0; index < 16; index += 1) bytes.push(Math.floor(Math.random() * 256));
-  bytes[6] = bytes[6] & 15 | 64;
-  bytes[8] = bytes[8] & 63 | 128;
-  const text2 = bytes.map(
-    /** Encodes every byte as two hexadecimal digits. */
-    (byte) => byte.toString(16).padStart(2, "0")
-  ).join("");
-  return text2.slice(0, 8) + "-" + text2.slice(8, 12) + "-" + text2.slice(12, 16) + "-" + text2.slice(16, 20) + "-" + text2.slice(20);
 }
 
 // src/storage/merge.json
@@ -747,11 +776,6 @@ var merge_default = {
   }
 };
 
-// src/storage/state.ts
-function userDocumentPath(ownerKey) {
-  return "owners/" + encodeURIComponent(ownerKey) + "/USER.md";
-}
-
 // src/storage/records.ts
 var ownerCollections = [
   "memories",
@@ -831,6 +855,9 @@ function decodeStateFromRecords(metadata, rows) {
     version: metadata.version,
     active: metadata.active === null ? { Model: { id: "chat" } } : metadata.active,
     memoryPreferences: metadata.memoryPreferences,
+    // States written by the released plugin or the Core migration predate recall settings; the
+    // released default stays enabled so existing installations keep recalling after the upgrade.
+    memoryRecall: normalizeMemoryRecallSettings(metadata.memoryRecall === void 0 ? { enabled: true } : metadata.memoryRecall),
     cards: [],
     groups: [],
     tags: [],
@@ -1580,6 +1607,9 @@ function findChatBinding(chatId) {
   });
 }
 
+// src/memory-jobs/scheduler.ts
+var CANDIDATE_PROCESSING_LEASE_MS = 30 * 60 * 1e3;
+
 // src/definition.ts
 var definition = { id: "com.operit.character_cards", title: "\u89D2\u8272\u5361", icon: "Badge", order: 150 };
 var chatUiRoutes = {
@@ -1616,7 +1646,9 @@ function renderMemoryMenu(ctx) {
   const owner2 = ctx.useRef("memory-menu-chat", chatId);
   const [available, setAvailable] = ctx.useState("memory-menu-available", null);
   const [preferences, setPreferences] = ctx.useState("memory-menu-preferences", null);
-  const [, setQueue] = ctx.useState("memory-menu-queue", null);
+  const [recall, setRecall] = ctx.useState("memory-menu-recall", null);
+  const [limitInput, setLimitInput] = ctx.useState("memory-recall-limit-input", "3");
+  const [queue, setQueue] = ctx.useState("memory-menu-queue", null);
   const [expanded, setExpanded] = ctx.useState("memory-menu-expanded", false);
   const [busy, setBusy] = ctx.useState("memory-menu-busy", false);
   const liveBusy = ctx.useRef("memory-menu-busy-live", false);
@@ -1651,6 +1683,10 @@ function renderMemoryMenu(ctx) {
       const value = yield request({ action: "readGlobalMemoryPreferences" });
       assertOwner();
       setPreferences(value);
+      const recallValue = yield request({ action: "readMemoryRecallSettings" });
+      assertOwner();
+      setRecall(recallValue);
+      setLimitInput(String(recallValue.limit));
       yield refreshQueue();
     });
   }
@@ -1671,6 +1707,43 @@ function renderMemoryMenu(ctx) {
       assertOwner();
       setPreferences(value);
     });
+  }
+  function writeRecall(settings2) {
+    return __async(this, null, function* () {
+      assertOwner();
+      const value = yield request({ action: "writeMemoryRecallSettings", settings: settings2 });
+      assertOwner();
+      setRecall(value);
+    });
+  }
+  function toggleRecall() {
+    return __async(this, null, function* () {
+      const [current] = ctx.useState("memory-menu-recall", null);
+      if (current === null) throw new Error("Memory recall settings are not loaded");
+      yield writeRecall({ ...current, enabled: !current.enabled });
+    });
+  }
+  function toggleRecallRepeat() {
+    return __async(this, null, function* () {
+      const [current] = ctx.useState("memory-menu-recall", null);
+      if (current === null) throw new Error("Memory recall settings are not loaded");
+      yield writeRecall({ ...current, allowRepeated: !current.allowRepeated });
+    });
+  }
+  function changeRecallLimit(limit) {
+    return __async(this, null, function* () {
+      const [current] = ctx.useState("memory-menu-recall", null);
+      if (current === null) throw new Error("Memory recall settings are not loaded");
+      if (limit === current.limit) return;
+      yield writeRecall({ ...current, limit });
+    });
+  }
+  function changeRecallLimitInput(value) {
+    setLimitInput(value);
+    const limit = Number(value);
+    if (!Number.isInteger(limit) || limit < MEMORY_RECALL_LIMIT_RANGE.min || limit > MEMORY_RECALL_LIMIT_RANGE.max) return;
+    if (recall !== null && limit === recall.limit) return;
+    return changeRecallLimit(limit);
   }
   function manual() {
     return __async(this, null, function* () {
@@ -1693,49 +1766,85 @@ function renderMemoryMenu(ctx) {
       }
     });
   }
+  function retryFailed() {
+    return __async(this, null, function* () {
+      assertOwner();
+      if (liveBusy.current || chatId === null) return null;
+      liveBusy.current = true;
+      setBusy(true);
+      try {
+        const result = yield request({ action: "retryFailedCandidates", chatId });
+        assertOwner();
+        yield refreshQueue();
+        return { type: "toolpkg.ui.message", message: "\u5DF2\u91CD\u65B0\u6392\u961F " + result.retried + " \u6761\u5931\u8D25\u5019\u9009" };
+      } catch (error) {
+        assertOwner();
+        return { type: "toolpkg.ui.message", message: "\u91CD\u8BD5\u5931\u8D25\u5019\u9009\u5931\u8D25\uFF1A" + String(error) };
+      } finally {
+        liveBusy.current = false;
+        assertOwner();
+        setBusy(false);
+      }
+    });
+  }
+  function clearFailed() {
+    return __async(this, null, function* () {
+      assertOwner();
+      if (liveBusy.current || chatId === null) return null;
+      liveBusy.current = true;
+      setBusy(true);
+      try {
+        const result = yield request({ action: "clearFailedCandidates", chatId });
+        assertOwner();
+        yield refreshQueue();
+        return { type: "toolpkg.ui.message", message: "\u5DF2\u6E05\u9664 " + result.cleared + " \u6761\u5931\u8D25\u8BB0\u5F55" };
+      } catch (error) {
+        assertOwner();
+        return { type: "toolpkg.ui.message", message: "\u6E05\u9664\u5931\u8D25\u8BB0\u5F55\u5931\u8D25\uFF1A" + String(error) };
+      } finally {
+        liveBusy.current = false;
+        assertOwner();
+        setBusy(false);
+      }
+    });
+  }
   function icon(name, color = colors.onSurfaceVariant) {
-    return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:68458",[name,color],__operitUiTemplate_68458);
+    return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:73561",__operitUiPrograms_[0],[name,color]);
   }
-  function switchRow(key, name, title) {
-    if (preferences === null) throw new Error("Memory preferences are not loaded");
-    const checked = preferences[key];
-    return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:68682",["memory-" + key,ctx.Modifier.heightIn({ minHeight: 32 }),() => toggle(key),icon(name, checked ? colors.primary : colors.onSurfaceVariant),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:68989",null,__operitUiTemplate_68989),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69025",[title,colors.onSurface],__operitUiTemplate_69025),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69152",[checked ? "\u5F00" : "\u5173",colors.primary],__operitUiTemplate_69152),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69274",null,__operitUiTemplate_69274),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69309",[checked,() => toggle(key)],__operitUiTemplate_69309)],__operitUiTemplate_68682);
+  function switchRow(key, name, title, checked, toggleRow) {
+    return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:73683",__operitUiPrograms_[1],["memory-" + key,({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 32 }]}])}),() => toggleRow(),icon(name, checked ? colors.primary : colors.onSurfaceVariant),title,colors.onSurface,checked ? "\u5F00" : "\u5173",colors.primary,checked,() => toggleRow()]);
   }
-  if (available === false) return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69441",null,__operitUiTemplate_69441);
-  if (preferences === null) return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69524",[load],__operitUiTemplate_69524);
-  const children = [OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69602",[ctx.Modifier.heightIn({ minHeight: 36 }),() => {
+  function limitInputRow(title) {
+    return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:74453",__operitUiPrograms_[2],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 32 }]}])}),icon("Tune"),title,colors.onSurface,limitInput,"1-" + MEMORY_RECALL_LIMIT_RANGE.max,changeRecallLimitInput,({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"width",args:[72]}])})]);
+  }
+  if (available === false) return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:75300",__operitUiPrograms_[3],[]);
+  if (preferences === null) return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:75383",__operitUiPrograms_[4],[load]);
+  const children = [OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:75461",__operitUiPrograms_[5],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 36 }]}])}),() => {
       assertOwner();
       setExpanded(!expanded);
-    },icon("DataObjectOutlined", colors.onSurfaceVariant.copy({ alpha: 0.7 })),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69956",null,__operitUiTemplate_69956),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:69990",null,__operitUiTemplate_69990),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70053",null,__operitUiTemplate_70053),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70086",[memorySummary(preferences),colors.primary],__operitUiTemplate_70086),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70267",[showInfo,OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70497",[colors.onSurfaceVariant.copy({ alpha: 0.7 })],__operitUiTemplate_70497)],__operitUiTemplate_70267),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70608",null,__operitUiTemplate_70608),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70641",[expanded ? "KeyboardArrowUp" : "KeyboardArrowDown",colors.onSurfaceVariant],__operitUiTemplate_70641)],__operitUiTemplate_69602)];
-  if (expanded) children.push(OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:70793",[ctx.Modifier.padding(12, 0, 8, 4),switchRow("userDescriptionEnabled", "AssignmentIndOutlined", "\u63D0\u4F9B\u7528\u6237\u8D44\u6599"),switchRow("autoUpdateEnabled", preferences.autoUpdateEnabled ? "Save" : "SaveOutlined", "\u81EA\u52A8\u66F4\u65B0\u8BB0\u5FC6\u5E93"),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:71139",[ctx.Modifier.heightIn({ minHeight: 32 }),!busy && chatId !== null ? manual : void 0,icon("SaveOutlined"),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:71429",null,__operitUiTemplate_71429),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:71465",[busy ? "\u6B63\u5728\u66F4\u65B0\u8BB0\u5FC6\u2026" : "\u624B\u52A8\u66F4\u65B0\u8BB0\u5FC6",!busy && chatId !== null ? colors.onSurface : colors.onSurfaceVariant.copy({ alpha: 0.45 })],__operitUiTemplate_71465)],__operitUiTemplate_71139)],__operitUiTemplate_70793));
-  return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:71824",[children],__operitUiTemplate_71824);
+    },icon("DataObjectOutlined", colors.onSurfaceVariant.copy({ alpha: 0.7 })),memorySummary(preferences),colors.primary,showInfo,colors.onSurfaceVariant.copy({ alpha: 0.7 }),expanded ? "KeyboardArrowUp" : "KeyboardArrowDown",colors.onSurfaceVariant])];
+  if (expanded) {
+    const sectionChildren = [
+      switchRow("userDescriptionEnabled", "AssignmentIndOutlined", "\u63D0\u4F9B\u7528\u6237\u8D44\u6599", preferences.userDescriptionEnabled, () => toggle("userDescriptionEnabled")),
+      switchRow("autoUpdateEnabled", preferences.autoUpdateEnabled ? "Save" : "SaveOutlined", "\u81EA\u52A8\u66F4\u65B0\u8BB0\u5FC6\u5E93", preferences.autoUpdateEnabled, () => toggle("autoUpdateEnabled")),
+      switchRow("memoryRecall", "AutoAwesome", "\u81EA\u52A8\u68C0\u7D22\u6CE8\u5165\u8BB0\u5FC6", recall !== null && recall.enabled, toggleRecall),
+      limitInputRow("\u8BB0\u5FC6\u6CE8\u5165\u6761\u6570"),
+      switchRow("memoryRecallRepeat", "Repeat", "\u5141\u8BB8\u91CD\u590D\u547D\u4E2D", recall !== null && recall.allowRepeated, toggleRecallRepeat),
+      OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:77427",__operitUiPrograms_[6],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 32 }]}])}),!busy && chatId !== null ? manual : void 0,icon("SaveOutlined"),busy ? "\u6B63\u5728\u66F4\u65B0\u8BB0\u5FC6\u2026" : "\u624B\u52A8\u66F4\u65B0\u8BB0\u5FC6",!busy && chatId !== null ? colors.onSurface : colors.onSurfaceVariant.copy({ alpha: 0.45 })])
+    ];
+    if (queue !== null && queue.failedCandidates > 0) {
+      const enabled = !busy && chatId !== null;
+      sectionChildren.push(
+        OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:78279",__operitUiPrograms_[7],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 32 }]}])}),enabled ? retryFailed : void 0,icon("Refresh"),"\u91CD\u8BD5\u5931\u8D25\u5019\u9009\uFF08" + queue.failedCandidates + "\uFF09",enabled ? colors.onSurface : colors.onSurfaceVariant.copy({ alpha: 0.45 })]),
+        OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:78989",__operitUiPrograms_[8],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 32 }]}])}),enabled ? clearFailed : void 0,icon("DeleteOutline"),"\u6E05\u9664\u5931\u8D25\u8BB0\u5F55\uFF08" + queue.failedCandidates + "\uFF09",enabled ? colors.onSurface : colors.onSurfaceVariant.copy({ alpha: 0.45 })])
+      );
+    }
+    children.push(OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:79729",__operitUiPrograms_[9],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"padding",args:[12,0,8,4]}])}),sectionChildren]));
+  }
+  return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-memory/index.ui.js:79856",__operitUiPrograms_[10],[children]);
 }
 
 // src/ui/chat-input-memory/index.ui.ts
 function Screen(ctx) {
   return renderMemoryMenu(ctx);
 }
-
-function __operitUiTemplate_68458(__ctx,__values){return __ctx.UI.Icon({name:__values[0],size:16,tint:__values[1]}); }
-function __operitUiTemplate_68989(__ctx,__values){return __ctx.UI.Spacer({width:12}); }
-function __operitUiTemplate_69025(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",color:__values[1],maxLines:1,overflow:"ellipsis",weight:1}); }
-function __operitUiTemplate_69152(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",color:__values[1],fontWeight:"600"}); }
-function __operitUiTemplate_69274(__ctx,__values){return __ctx.UI.Spacer({width:8}); }
-function __operitUiTemplate_69309(__ctx,__values){return __ctx.UI.Switch({checked:__values[0],width:40,height:28,onCheckedChange:__values[1]}); }
-function __operitUiTemplate_68682(__ctx,__values){return __ctx.UI.Row({key:__values[0],fillMaxWidth:true,paddingHorizontal:12,verticalAlignment:"center",modifier:__values[1],onClick:__values[2]},[__values[3],__values[4],__values[5],__values[6],__values[7],__values[8]]); }
-function __operitUiTemplate_69441(__ctx,__values){return __ctx.UI.Box({key:"memory-menu-unavailable"}); }
-function __operitUiTemplate_69524(__ctx,__values){return __ctx.UI.Box({key:"memory-menu-loading",onLoad:__values[0]}); }
-function __operitUiTemplate_69956(__ctx,__values){return __ctx.UI.Spacer({width:12}); }
-function __operitUiTemplate_69990(__ctx,__values){return __ctx.UI.Text({text:"\u8BB0\u5FC6",style:"bodySmall"}); }
-function __operitUiTemplate_70053(__ctx,__values){return __ctx.UI.Spacer({width:8}); }
-function __operitUiTemplate_70086(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",color:__values[1],fontWeight:"600",textAlign:"end",maxLines:1,overflow:"ellipsis",weight:1}); }
-function __operitUiTemplate_70497(__ctx,__values){return __ctx.UI.Icon({name:"InfoOutline",size:16,tint:__values[0]}); }
-function __operitUiTemplate_70267(__ctx,__values){return __ctx.UI.IconButton({key:"memory-info",tooltip:"\u8BB0\u5FC6\u72B6\u6001\u8BF4\u660E",width:24,height:28,contentPadding:{horizontal:0,vertical:0},onClick:__values[0],content:__values[1]}); }
-function __operitUiTemplate_70608(__ctx,__values){return __ctx.UI.Spacer({width:6}); }
-function __operitUiTemplate_70641(__ctx,__values){return __ctx.UI.Icon({name:__values[0],size:20,tint:__values[1]}); }
-function __operitUiTemplate_69602(__ctx,__values){return __ctx.UI.Row({key:"memory-section-header",fillMaxWidth:true,paddingHorizontal:12,verticalAlignment:"center",modifier:__values[0],onClick:__values[1]},[__values[2],__values[3],__values[4],__values[5],__values[6],__values[7],__values[8],__values[9]]); }
-function __operitUiTemplate_71429(__ctx,__values){return __ctx.UI.Spacer({width:12}); }
-function __operitUiTemplate_71465(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",maxLines:2,overflow:"ellipsis",weight:1,color:__values[1]}); }
-function __operitUiTemplate_71139(__ctx,__values){return __ctx.UI.Row({key:"memory-manual",fillMaxWidth:true,paddingHorizontal:12,verticalAlignment:"center",modifier:__values[0],onClick:__values[1]},[__values[2],__values[3],__values[4]]); }
-function __operitUiTemplate_70793(__ctx,__values){return __ctx.UI.Column({key:"memory-section-children",modifier:__values[0]},[__values[1],__values[2],__values[3]]); }
-function __operitUiTemplate_71824(__ctx,__values){return __ctx.UI.Column({key:"memory-section",fillMaxWidth:true},__values[0]); }

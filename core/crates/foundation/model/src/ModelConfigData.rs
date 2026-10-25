@@ -79,7 +79,6 @@ pub enum ApiProviderType {
     DEEPSEEK,
     MISTRAL,
     SILICONFLOW,
-    IFLOW,
     OPENROUTER,
     OPENCODE,
     FOUR_ROUTER,
@@ -123,7 +122,6 @@ impl ApiProviderType {
             "DEEPSEEK" => Some(Self::DEEPSEEK),
             "MISTRAL" => Some(Self::MISTRAL),
             "SILICONFLOW" => Some(Self::SILICONFLOW),
-            "IFLOW" => Some(Self::IFLOW),
             "OPENROUTER" => Some(Self::OPENROUTER),
             "OPENCODE" => Some(Self::OPENCODE),
             "FOUR_ROUTER" => Some(Self::FOUR_ROUTER),
@@ -167,7 +165,6 @@ impl ApiProviderType {
             Self::DEEPSEEK => "DEEPSEEK",
             Self::MISTRAL => "MISTRAL",
             Self::SILICONFLOW => "SILICONFLOW",
-            Self::IFLOW => "IFLOW",
             Self::OPENROUTER => "OPENROUTER",
             Self::OPENCODE => "OPENCODE",
             Self::FOUR_ROUTER => "FOUR_ROUTER",
@@ -384,6 +381,9 @@ impl ModelSummarySettings {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct LocalModelRuntimeSettings {
+    /// Opaque Binding selecting the device that owns the installed model weights.
+    #[serde(default)]
+    pub inferenceBindingKey: String,
     pub mnnForwardType: i32,
     pub mnnThreadCount: i32,
     pub llamaThreadCount: i32,
@@ -400,6 +400,7 @@ pub struct LocalModelRuntimeSettings {
 impl Default for LocalModelRuntimeSettings {
     fn default() -> Self {
         Self {
+            inferenceBindingKey: String::new(),
             mnnForwardType: 0,
             mnnThreadCount: 4,
             llamaThreadCount: 4,

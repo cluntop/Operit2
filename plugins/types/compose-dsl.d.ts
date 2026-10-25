@@ -3156,6 +3156,44 @@ export interface LoadingIndicatorProps extends ComposeCommonProps {
 }
 
 /**
+ * Controlled Material slider with explicit bounds and independent drag completion.
+ */
+export interface SliderProps extends ComposeCommonProps {
+  /**
+   * Current value within the declared bounds.
+   */
+  value: number;
+  /**
+   * Inclusive lower bound.
+   */
+  min: number;
+  /**
+   * Inclusive upper bound.
+   */
+  max: number;
+  /**
+   * Optional number of evenly spaced intervals.
+   */
+  divisions?: number;
+  /**
+   * Value label shown during interaction.
+   */
+  label?: string;
+  /**
+   * Whether the slider accepts interaction.
+   */
+  enabled?: boolean;
+  /**
+   * Receives each local value change.
+   */
+  onValueChange: (arg0: number) => void;
+  /**
+   * Receives the final drag value for durable settings writes.
+   */
+  onValueChangeFinished?: (arg0: number) => void;
+}
+
+/**
  * Controlled state and colors for a binary sliding switch.
  */
 export interface SwitchProps extends ComposeCommonProps {
@@ -3312,6 +3350,11 @@ export interface IconButtonProps extends ComposeCommonProps {
 }
 
 /**
+ * Global surface layer whose material treatment follows the host theme settings.
+ */
+export type ComposeThemeSurfaceLayer = "panel" | "card" | "control";
+
+/**
  * Elevated or outlined Material container for grouped content.
  */
 export interface CardProps extends ComposeCommonProps {
@@ -3319,6 +3362,10 @@ export interface CardProps extends ComposeCommonProps {
    * Child nodes rendered inside the card container.
    */
   content?: ComposeChildren;
+  /**
+   * Uses global transparency and blur for this layer; requires containerColor and has no elevation.
+   */
+  themeSurface?: ComposeThemeSurfaceLayer;
   /**
    * Background color of the card surface.
    */
@@ -3533,6 +3580,14 @@ export interface SnackbarHostProps extends ComposeCommonProps {
  * Properties for embedding the host AI chat content without its workspace panel.
  */
 export interface AiChatProps extends ComposeCommonProps {
+  /**
+   * Identifies the conversation shown in a local embedded chat runtime without changing the main selection.
+   */
+  chatId?: string;
+  /**
+   * Controls the native composer; false leaves sending and cancellation to the surrounding workflow.
+   */
+  showInput?: boolean;
 }
 
 /**
@@ -4049,6 +4104,10 @@ export interface ComposeUiFactoryRegistry {
    * Creates a controlled binary switch.
    */
   Switch: ComposeNodeFactory<SwitchProps>;
+  /**
+   * Factory used to construct a bounded native Material slider.
+   */
+  Slider: ComposeNodeFactory<SliderProps>;
   /**
    * Creates a controlled checkbox.
    */

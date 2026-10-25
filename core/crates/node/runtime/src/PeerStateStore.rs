@@ -760,6 +760,14 @@ mod tests {
         std::sync::atomic::AtomicBool,
     );
     impl RuntimeStorageHost for Storage {
+        /// Confirms synchronous in-memory publication without copying or rewriting bytes.
+        fn flushFile(&self, path: &str) -> operit_host_api::HostResult<()> {
+            if !self.exists(path)? {
+                return Err(operit_host_api::HostError::new("runtime storage entry not found"));
+            }
+            Ok(())
+        }
+
         fn runtimeRootDir(&self) -> Option<std::path::PathBuf> {
             None
         }
@@ -774,6 +782,11 @@ mod tests {
                 .cloned()
                 .ok_or_else(|| HostError::new("missing"))
         }
+        /// Atomically publishes one complete in-memory test entry.
+        fn writeBytesAtomically(&self, path: &str, content: &[u8]) -> operit_host_api::HostResult<()> {
+            self.writeBytes(path, content)
+        }
+
         fn writeBytes(&self, path: &str, bytes: &[u8]) -> HostResult<()> {
             if self.1.load(std::sync::atomic::Ordering::Relaxed) {
                 return Err(HostError::new("injected write failure"));

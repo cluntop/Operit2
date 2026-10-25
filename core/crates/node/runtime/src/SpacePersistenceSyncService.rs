@@ -727,15 +727,18 @@ impl SpacePersistenceSyncService {
             if !self.storageReplicationAllowed(targetNodeId)? {
                 return Ok(false);
             }
-            let localClock: Value = self.callLocal("syncClock", Value::Null).await?;
+            let (localClock, remoteClock) = tokio::join!(
+                self.callLocal::<Value>("syncClock", Value::Null),
+                callRemote::<Value>(
+                    &self.state.nodeRouter,
+                    targetNodeId,
+                    PeerSyncMethod::SyncClock,
+                    Value::Null,
+                ),
+            );
+            let localClock = localClock?;
             validateDomainClock(&localClock, domains, "local")?;
-            let remoteClock: Value = callRemote(
-                &self.state.nodeRouter,
-                targetNodeId,
-                PeerSyncMethod::SyncClock,
-                Value::Null,
-            )
-            .await?;
+            let remoteClock = remoteClock?;
             validateDomainClock(&remoteClock, domains, "remote")?;
             self.recordPendingWork(targetNodeId, "local receipt", &localClock);
             self.recordPendingWork(targetNodeId, "remote receipt", &remoteClock);
@@ -763,27 +766,28 @@ impl SpacePersistenceSyncService {
                     summarizeSyncClock(&remoteClock)
                 ),
             );
-            let localOperations: Value = self
-                .callLocal(
+            let (localOperations, remoteOperations) = tokio::join!(
+                self.callLocal::<Value>(
                     "syncOperationsSince",
                     json!({
                         "clock": remoteClock,
                         "domains": domains,
                         "limit": limit,
                     }),
-                )
-                .await?;
-            let remoteOperations: Value = callRemote(
-                &self.state.nodeRouter,
-                targetNodeId,
-                PeerSyncMethod::SyncOperationsSince,
-                json!({
-                    "clock": localClock,
-                    "domains": domains,
-                    "limit": limit,
-                }),
-            )
-            .await?;
+                ),
+                callRemote::<Value>(
+                    &self.state.nodeRouter,
+                    targetNodeId,
+                    PeerSyncMethod::SyncOperationsSince,
+                    json!({
+                        "clock": localClock,
+                        "domains": domains,
+                        "limit": limit,
+                    }),
+                ),
+            );
+            let localOperations = localOperations?;
+            let remoteOperations = remoteOperations?;
             if !self.storageReplicationAllowed(targetNodeId)? {
                 return Ok(false);
             }
@@ -794,9 +798,8 @@ impl SpacePersistenceSyncService {
                 remoteOperations["operations"].clone(),
             )?;
             if operations.is_empty() {
-                let complete = preferenceHistoryComplete([&localOperations, &remoteOperations])?;
                 if !self
-                    .applySynchronizedOperationBatch(targetNodeId, &operations, &[], complete)
+                    .applySynchronizedOperationBatch(targetNodeId, &operations, &[])
                     .await?
                 {
                     return Ok(false);
@@ -850,7 +853,7 @@ impl SpacePersistenceSyncService {
                 ),
             );
             if !self
-                .applySynchronizedOperationBatch(targetNodeId, &operations, &sizes, false)
+                .applySynchronizedOperationBatch(targetNodeId, &operations, &sizes)
                 .await?
             {
                 return Ok(false);
@@ -868,14 +871,13 @@ impl SpacePersistenceSyncService {
     }
 
     /// Applies one transport page on both peers, split into messages that fit
-    /// the connection ceiling, with an explicit current-history completion boundary.
+    /// the connection ceiling, preserving every original operation boundary.
     #[allow(non_snake_case)]
     async fn applySynchronizedOperationBatch(
         &self,
         targetNodeId: &str,
         operations: &[Value],
         sizes: &[usize],
-        complete: bool,
     ) -> Result<bool, String> {
         if let Err(error) = self
             .synchronizeRequiredBlobs(targetNodeId, operations)
@@ -886,8 +888,7 @@ impl SpacePersistenceSyncService {
         if !self.storageReplicationAllowed(targetNodeId)? {
             return Ok(false);
         }
-        // The empty page still travels: it is the explicit "clocks are equal"
-        // boundary that finalizes preference history on both peers.
+        // Empty pages retry durable pending operations on both peers.
         let chunks = if operations.is_empty() {
             vec![operations]
         } else {
@@ -897,26 +898,22 @@ impl SpacePersistenceSyncService {
                 self.state.nodeRouter.maxPeerMessageBytes(),
             )?
         };
-        for (index, chunk) in chunks.iter().copied().enumerate() {
-            // A split page only closes the history boundary on its final
-            // message; an earlier one must not finalize the same history.
-            let chunkComplete = chunkCompletesPage(complete, index, chunks.len());
-            let remote: Result<Value, String> = callRemote(
-                &self.state.nodeRouter,
-                targetNodeId,
-                PeerSyncMethod::SyncApplyOperations,
-                json!({ "operations": chunk, "complete": chunkComplete }),
-            )
-            .await;
+        for chunk in chunks.iter().copied() {
+            let (remote, local) = tokio::join!(
+                callRemote::<Value>(
+                    &self.state.nodeRouter,
+                    targetNodeId,
+                    PeerSyncMethod::SyncApplyOperations,
+                    json!({ "operations": chunk }),
+                ),
+                self.callLocal::<Value>(
+                    "syncApplyOperations",
+                    json!({ "operations": chunk }),
+                ),
+            );
             if !self.storageReplicationAllowed(targetNodeId)? {
                 return Ok(false);
             }
-            let local: Result<Value, String> = self
-                .callLocal(
-                    "syncApplyOperations",
-                    json!({ "operations": chunk, "complete": chunkComplete }),
-                )
-                .await;
             for (side, result) in [("remote apply", &remote), ("local apply", &local)] {
                 if let Ok(report) = result {
                     self.recordPendingWork(targetNodeId, side, report);
@@ -1185,7 +1182,8 @@ impl SpacePersistenceSyncService {
             return Ok(());
         }
         let service = self.clone();
-        let scheduleResult = defaultHostRuntimeTaskSchedulerHost().scheduleHostRuntimeAsyncTask(
+        // The sync pass performs synchronous storage work between its remote awaits.
+        let scheduleResult = defaultHostRuntimeTaskSchedulerHost().scheduleHostRuntimeBlockingAsyncTask(
             "core-node-space-persistence-sync",
             Box::new(move || {
                 Box::pin(async move {
@@ -1277,16 +1275,13 @@ impl SpacePersistenceSyncService {
     where
         T: DeserializeOwned,
     {
-        let response = self
-            .state
-            .localRuntime
-            .callApplication(applicationCallRequest(
-                &self.state.nodeRouter,
-                methodName,
-                args,
-            )?)
-            .await;
-        decodeCoreResponse(response.result.map_err(|error| error.to_string())?)
+        let request = applicationCallRequest(&self.state.nodeRouter, methodName, args)?;
+        let startedAt = currentTimeMillis();
+        let response = self.state.localRuntime.callApplication(request).await;
+        recordSlowSyncCall("local", methodName, startedAt);
+        decodeCoreResponse(response.result.map_err(|error| {
+            format!("local {methodName}: {error}")
+        })?)
     }
 }
 
@@ -1318,7 +1313,7 @@ fn blobPushRequest(
         .targetForSchema("services.syncBlobTransferManager")
         .ok_or_else(|| "unknown Core schema key: services.syncBlobTransferManager".to_string())?;
     Ok(CorePushRequest::new(
-        format!("space-persistence-blob-{}", currentTimeMillis()),
+        operit_link::nextCoreRouteRequestId("space-persistence-blob"),
         target,
         "syncReceiveBlob",
     )
@@ -1420,13 +1415,17 @@ async fn callRemote<T>(
 where
     T: DeserializeOwned,
 {
-    let response = nodeRouter
-        .callNode(
-            targetNodeId.to_string(),
-            method.request(operit_link::nextCoreRouteRequestId("space-persistence"), toCoreValue(args).map_err(|error| error.to_string())?),
-        )
-        .await;
-    decodeCoreResponse(response.result.map_err(|error| error.to_string())?)
+    let request = method.request(
+        operit_link::nextCoreRouteRequestId("space-persistence"),
+        toCoreValue(args).map_err(|error| error.to_string())?,
+    );
+    let methodName = request.methodName.clone();
+    let startedAt = currentTimeMillis();
+    let response = nodeRouter.callNode(targetNodeId.to_string(), request).await;
+    recordSlowSyncCall(targetNodeId, &methodName, startedAt);
+    decodeCoreResponse(response.result.map_err(|error| {
+        format!("remote {targetNodeId} {methodName}: {error}")
+    })?)
 }
 
 /// Invokes one generated service method through the Router.
@@ -1441,13 +1440,23 @@ async fn callRemoteService<T>(
 where
     T: DeserializeOwned,
 {
-    let response = nodeRouter
-        .callNode(
-            targetNodeId.to_string(),
-            serviceCallRequest(nodeRouter, targetPath, methodName, args)?,
-        )
-        .await;
-    decodeCoreResponse(response.result.map_err(|error| error.to_string())?)
+    let request = serviceCallRequest(nodeRouter, targetPath, methodName, args)?;
+    let startedAt = currentTimeMillis();
+    let response = nodeRouter.callNode(targetNodeId.to_string(), request).await;
+    recordSlowSyncCall(targetNodeId, methodName, startedAt);
+    decodeCoreResponse(response.result.map_err(|error| {
+        format!("remote {targetNodeId} {targetPath}.{methodName}: {error}")
+    })?)
+}
+
+/// Reports slow synchronization steps without logging business payloads or adding another dispatch path.
+fn recordSlowSyncCall(target: &str, method: &str, startedAt: i64) {
+    let elapsedMs = currentTimeMillis() - startedAt;
+    if elapsedMs >= 250 {
+        operit_util::AppLogger::AppLogger::trace("CoreSyncTrace", &format!(
+            "sync_call.slow target={target} method={method} elapsedMs={elapsedMs}"
+        ));
+    }
 }
 
 /// Builds one Link request for an application-level runtime operation.
@@ -1457,7 +1466,7 @@ fn applicationCallRequest(
     args: Value,
 ) -> Result<CoreCallRequest, String> {
     Ok(CoreCallRequest::new(
-        format!("space-persistence-{methodName}-{}", currentTimeMillis()),
+        operit_link::nextCoreRouteRequestId(&format!("space-persistence-{methodName}")),
         nodeRouter
             .targetForSchema("application")
             .ok_or_else(|| "unknown Core schema key: application".to_string())?,
@@ -1482,7 +1491,7 @@ fn serviceCallRequest(
             .ok_or_else(|| format!("unknown Core schema key: {targetPath}"))?
     };
     Ok(CoreCallRequest::new(
-        format!("space-persistence-{methodName}-{}", currentTimeMillis()),
+        operit_link::nextCoreRouteRequestId(&format!("space-persistence-{methodName}")),
         target,
         methodName,
         toCoreValue(args).map_err(|error| error.to_string())?,
@@ -1592,10 +1601,7 @@ fn syncPageBudget(maxMessageBytes: usize) -> usize {
     (maxMessageBytes.saturating_mul(3) / 4).saturating_sub(SYNC_PAGE_HEADROOM_BYTES)
 }
 
-/// Only the final message of a page may close the history boundary.
-fn chunkCompletesPage(complete: bool, index: usize, chunks: usize) -> bool {
-    complete && index + 1 == chunks
-}
+
 
 /// Splits one ordered, deduplicated page into contiguous slices that each fit
 /// the Link ceiling. Operations stay whole, so a transaction is never divided.
@@ -1645,16 +1651,7 @@ fn summarizeSyncClock(value: &Value) -> String {
     )
 }
 
-/// Closes preference history only when both journals exported successfully.
-fn preferenceHistoryComplete(exports: [&Value; 2]) -> Result<bool, String> {
-    let mut complete = true;
-    for report in exports {
-        let failedDomains: Vec<String> = serde_json::from_value(report["failedDomains"].clone())
-            .map_err(|error| format!("invalid export failure domains: {error}"))?;
-        complete &= !failedDomains.iter().any(|domain| domain == "preferences");
-    }
-    Ok(complete)
-}
+
 
 /// Records one page's operation ids and reports whether it added a new identity.
 ///
@@ -1752,16 +1749,7 @@ mod page_budget_tests {
         assert!(validateDomainClock(&clock, &SYNC_DOMAINS, "local").is_ok());
     }
 
-    /// Requires complete preference export while leaving unrelated plugin failures independent.
-    #[test]
-    fn preference_completion_uses_structured_domain_failures() {
-        let healthy = json!({"failedDomains": []});
-        let pluginFailure = json!({"failedDomains": ["plugin_storage"]});
-        let preferenceFailure = json!({"failedDomains": ["preferences"]});
-        assert!(preferenceHistoryComplete([&healthy, &pluginFailure]).unwrap());
-        assert!(!preferenceHistoryComplete([&preferenceFailure, &healthy]).unwrap());
-        assert!(preferenceHistoryComplete([&healthy, &json!({})]).is_err());
-    }
+
 
     /// Constructs one transport-sized plugin operation for page budget tests.
     fn operation(opId: &str, payloadBytes: usize) -> Value {
@@ -1837,14 +1825,7 @@ mod page_budget_tests {
         assert!(error.contains("domain=plugin_storage"), "{error}");
     }
 
-    #[test]
-    fn only_the_last_message_closes_the_history_boundary() {
-        assert!(chunkCompletesPage(true, 0, 1));
-        assert!(!chunkCompletesPage(false, 0, 1));
-        assert!(!chunkCompletesPage(true, 0, 3));
-        assert!(!chunkCompletesPage(true, 1, 3));
-        assert!(chunkCompletesPage(true, 2, 3));
-    }
+
 
     #[test]
     fn an_empty_page_has_no_chunks() {

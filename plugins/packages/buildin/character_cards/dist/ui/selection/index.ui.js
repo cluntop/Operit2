@@ -1,5 +1,7 @@
-// @operit-compose-artifact 2
+// @operit-compose-artifact 4
 "use strict";
+var __operitUiPrograms_=[{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:85095","root":0,"nodes":[{"type":"Image","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:85211","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,28],[0,28],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint","contentDescription"],[[0,"Person"],[0,22],[0,"onSurfaceVariant"],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:85382","root":0,"nodes":[{"type":"Image","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:85467","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,28],[0,28],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint","contentDescription"],[[0,"SmartToy"],[0,22],[0,"onSurfaceVariant"],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:85670","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,28],[0,28],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint","contentDescription"],[[0,"Groups"],[0,22],[0,"onSurfaceVariant"],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:86727","root":0,"nodes":[{"type":"Text","props":[2,["text","style","maxLines","overflow","color","fontWeight"],[[1,0],[0,"bodySmall"],[0,1],[0,"ellipsis"],[1,1],[1,2]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:86917","root":0,"nodes":[{"type":"Text","props":[2,["text","style","maxLines","overflow","color"],[[1,0],[0,"labelSmall"],[0,1],[0,"ellipsis"],[1,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:86660","root":0,"nodes":[{"type":"Column","props":[2,["weight","horizontalAlignment"],[[0,1],[0,"start"]]],"children":[1,0],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:87131","root":0,"nodes":[{"type":"CircularProgressIndicator","props":[2,["width","height","strokeWidth"],[[0,16],[0,16],[0,2]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:87209","root":0,"nodes":[{"type":"Icon","props":[2,["name","size","tint","contentDescription"],[[1,0],[1,1],[1,2],[1,3]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:87053","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,20],[0,20],[0,"center"]]],"children":[1,0],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:87480","root":0,"nodes":[{"type":"Row","props":[1,0],"children":[1,1],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:87518","root":0,"nodes":[{"type":"Row","props":[1,0],"children":[1,1],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88250","root":0,"nodes":[{"type":"Text","props":[2,["text","style","fontWeight","weight"],[[1,0],[0,"titleSmall"],[0,"700"],[0,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88366","root":0,"nodes":[{"type":"Text","props":[2,["text","style","color"],[[1,0],[0,"labelSmall"],[1,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88481","root":0,"nodes":[{"type":"Spacer","props":[2,["width"],[[0,2]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88515","root":0,"nodes":[{"type":"IconButton","props":[2,["key","enabled","width","height","onClick"],[[0,"selector-close"],[1,0],[0,32],[0,32],[1,1]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","contentDescription"],[[0,"Close"],[0,18],[0,"关闭"]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88114","root":0,"nodes":[{"type":"Row","props":[2,["fillMaxWidth","paddingStart","paddingTop","paddingEnd","paddingBottom","verticalAlignment"],[[0,true],[0,16],[0,8],[0,8],[0,4],[0,"center"]]],"children":[1,0],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:88964","root":0,"nodes":[{"type":"Box","props":[2,["weight","fillMaxWidth","contentAlignment"],[[0,1],[0,true],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"CircularProgressIndicator","props":[2,["width","height","strokeWidth"],[[0,20],[0,20],[0,2]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:89155","root":0,"nodes":[{"type":"Text","props":[2,["key","text","color","paddingHorizontal","paddingVertical","weight"],[[0,"selector-load-error"],[1,0],[1,1],[0,16],[0,18],[0,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:89346","root":0,"nodes":[{"type":"Text","props":[2,["text","style","color","paddingStart","paddingTop","paddingEnd","paddingBottom","weight"],[[1,0],[0,"bodySmall"],[1,1],[0,16],[0,18],[0,16],[0,20],[0,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:90069","root":0,"nodes":[{"type":"HorizontalDivider","props":[2,["thickness","color"],[[0,1],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:89876","root":0,"nodes":[{"type":"Column","props":[2,["key","fillMaxWidth"],[[1,0],[0,true]]],"children":[1,1],"explicitChildren":true}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:90192","root":0,"nodes":[{"type":"LazyColumn","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:91175","root":0,"nodes":[{"type":"HorizontalDivider","props":[2,["thickness"],[[0,1]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:91286","root":0,"nodes":[{"type":"Text","props":[2,["key","text","color","style","paddingHorizontal","paddingVertical"],[[0,"selector-commit-error"],[1,0],[1,1],[0,"bodySmall"],[0,16],[0,8]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/selection/index.ui.js:nx19d0:90359","root":0,"nodes":[{"type":"Dialog","props":[2,["key","containerColor","shape","closeOnDismissRequest","properties","onLoad","onDismissRequest"],[[0,"character-selection"],[0,"surfaceContainerHigh"],[2,["cornerRadius"],[[0,28]]],[0,false],[2,["usePlatformDefaultWidth","dismissOnBackPress","dismissOnClickOutside"],[[0,false],[1,0],[1,1]]],[1,2],[1,3]]],"children":[4,1],"explicitChildren":true},{"type":"Column","props":[2,["fillMaxWidth","height","modifier"],[[0,true],[0,420],[1,4]]],"children":[1,5],"explicitChildren":true}]}];
+
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -51,6 +53,9 @@ function assertObject(value, label) {
 }
 function assertString(value, label) {
   if (typeof value !== "string") throw new Error(`${label} \u5FC5\u987B\u662F\u5B57\u7B26\u4E32`);
+}
+function assertBoolean(value, label) {
+  if (typeof value !== "boolean") throw new Error(`${label} \u5FC5\u987B\u662F\u5E03\u5C14\u503C`);
 }
 function assertNumber(value, label, min, max) {
   if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label} \u5FC5\u987B\u5728 ${min} \u5230 ${max} \u4E4B\u95F4`);
@@ -154,6 +159,10 @@ function number(value, path) {
 }
 function integer(value, path) {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) throw new Error(`${path} must be a safe integer`);
+}
+function nonnegativeInteger(value, path) {
+  integer(value, path);
+  nonnegative(value, path);
 }
 function messageVariant(value, path) {
   integer(value, path);
@@ -275,8 +284,10 @@ var contentOnly = shape({ content: required(text) });
 var format = enumeration("operit", "tavern");
 var memoryQueryRequest = shape({ participantId: required(nonblank), query: required(nonblank), limit: required(nonnegative), snapshotId: required(nullable(nonblank)) });
 var validators = {
-  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(text), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
+  "memory.chunks": shape({ ownerKey: required(owner), memoryId: required(nonblank), query: required(nonblank), count: required(nonnegativeInteger) }),
+  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(nonblank), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
   "memory.chat.list": ownerOnly,
+  "memory.chat.pruneMissing": ownerOnly,
   "memory.chat.update": shape({ ownerKey: required(owner), chatId: required(nonblank) }),
   "memory.categorize": ownerOnly,
   "memory.rebuild.start": shape({ ownerKey: required(owner), rebuild: required(shape({ chatIds: required(strings), windowMessageCount: required(integer), fromInclusive: required(nullable(integer)), toInclusive: required(nullable(integer)) })) }),
@@ -284,6 +295,8 @@ var validators = {
   "memory.rebuild.cancel": ownerOnly,
   "memory.embeddings.rebuild": ownerOnly,
   "memory.candidate.enqueue": shape({ chatId: required(nonblank), timestamp: required(integer), variantIndex: required(messageVariant), sourceType: required(enumeration("reply_finalized_auto", "selected_user_message")), ownerKey: required(nullable(owner)) }),
+  "memory.candidates.retryFailed": ownerOnly,
+  "memory.candidates.clearFailed": ownerOnly,
   "chat.configuration.resolve": parseChatConfigurationRequest,
   "chat.configuration.binding.read": shape({ chatId: required(nonblank) }),
   "chat.configuration.binding.write": shape({ chatId: required(nonblank), selection: required(nonblank) }),
@@ -914,6 +927,17 @@ var merge_default = {
 function userDocumentPath(ownerKey) {
   return "owners/" + encodeURIComponent(ownerKey) + "/USER.md";
 }
+var MEMORY_RECALL_LIMIT_RANGE = { min: 1, max: 50 };
+function normalizeMemoryRecallSettings(value) {
+  assertObject(value, "memory recall settings");
+  assertBoolean(value.enabled, "memory recall enabled");
+  if (value.limit !== void 0) {
+    assertInteger(value.limit, "memory recall limit", MEMORY_RECALL_LIMIT_RANGE.min);
+    if (value.limit > MEMORY_RECALL_LIMIT_RANGE.max) throw new Error("memory recall limit \u5FC5\u987B\u4E0D\u8D85\u8FC7 " + MEMORY_RECALL_LIMIT_RANGE.max);
+  }
+  if (value.allowRepeated !== void 0) assertBoolean(value.allowRepeated, "memory recall allow repeated");
+  return { enabled: value.enabled, limit: value.limit ?? 3, allowRepeated: value.allowRepeated ?? false };
+}
 
 // src/storage/records.ts
 var ownerCollections = [
@@ -994,6 +1018,9 @@ function decodeStateFromRecords(metadata, rows) {
     version: metadata.version,
     active: metadata.active === null ? { Model: { id: "chat" } } : metadata.active,
     memoryPreferences: metadata.memoryPreferences,
+    // States written by the released plugin or the Core migration predate recall settings; the
+    // released default stays enabled so existing installations keep recalling after the upgrade.
+    memoryRecall: normalizeMemoryRecallSettings(metadata.memoryRecall === void 0 ? { enabled: true } : metadata.memoryRecall),
     cards: [],
     groups: [],
     tags: [],
@@ -1743,6 +1770,9 @@ function findChatBinding(chatId) {
   });
 }
 
+// src/memory-jobs/scheduler.ts
+var CANDIDATE_PROCESSING_LEASE_MS = 30 * 60 * 1e3;
+
 // src/definition.ts
 var definition = { id: "com.operit.character_cards", title: "\u89D2\u8272\u5361", icon: "Badge", order: 150 };
 var chatUiRoutes = {
@@ -1981,13 +2011,13 @@ function selectorAvatar(ctx, option) {
   const props = { width: 28, height: 28, contentScale: "crop", contentDescription: option.title, modifier: ctx.Modifier.clip({ type: "circle" }) };
   switch (option.avatar.type) {
     case "uri":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83463",[{ ...props, uri: option.avatar.uri }],__operitUiTemplate_83463);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85095",__operitUiPrograms_[0],[{ ...props, uri: option.avatar.uri }]);
     case "resource":
-      return option.avatar.path === null ? OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83579",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83645",[option.title],__operitUiTemplate_83645)],__operitUiTemplate_83579) : OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83750",[{ ...props, path: option.avatar.path }],__operitUiTemplate_83750);
+      return option.avatar.path === null ? OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85211",__operitUiPrograms_[1],[option.title]) : OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85382",__operitUiPrograms_[2],[{ ...props, path: option.avatar.path }]);
     case "model":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83835",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:83901",[option.title],__operitUiTemplate_83901)],__operitUiTemplate_83835);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85467",__operitUiPrograms_[3],[option.title]);
     case "group":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:84038",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:84104",[option.title],__operitUiTemplate_84104)],__operitUiTemplate_84038);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85670",__operitUiPrograms_[4],[option.title]);
   }
 }
 function selectorRow(ctx, option, state, controller) {
@@ -1999,51 +2029,51 @@ function selectorRow(ctx, option, state, controller) {
   const props = { key: option.key, fillMaxWidth: true, paddingStart: 10, paddingTop: 7, paddingEnd: 8, paddingBottom: 7, verticalAlignment: "center", spacing: 8 };
   const contents = [
     selectorAvatar(ctx, option),
-    OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85028",[[
-      OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85095",[option.title,titleColor,active ? "700" : "600"],__operitUiTemplate_85095),
-      ...option.description === "" ? [] : [OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85285",[option.description,descriptionColor],__operitUiTemplate_85285)]
-    ]],__operitUiTemplate_85028),
-    OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85421",[switching ? OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85499",null,__operitUiTemplate_85499) : OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85577",[active ? "Check" : "CircleOutlined",active ? 18 : 16,active ? colors.primary : colors.onSurfaceVariant.copy({ alpha: 0.45 }),active ? "\u5F53\u524D\u9009\u4E2D" : "\u672A\u9009\u4E2D"],__operitUiTemplate_85577)],__operitUiTemplate_85421)
+    OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86660",__operitUiPrograms_[7],[[
+      OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86727",__operitUiPrograms_[5],[option.title,titleColor,active ? "700" : "600"]),
+      ...option.description === "" ? [] : [OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86917",__operitUiPrograms_[6],[option.description,descriptionColor])]
+    ]]),
+    OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87053",__operitUiPrograms_[10],[switching ? OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87131",__operitUiPrograms_[8],[]) : OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87209",__operitUiPrograms_[9],[active ? "Check" : "CircleOutlined",active ? 18 : 16,active ? colors.primary : colors.onSurfaceVariant.copy({ alpha: 0.45 }),active ? "\u5F53\u524D\u9009\u4E2D" : "\u672A\u9009\u4E2D"])])
   ];
-  if (!enabled) return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85848",[props,contents],__operitUiTemplate_85848);
-  return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:85886",[{
+  if (!enabled) return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87480",__operitUiPrograms_[11],[props,contents]);
+  return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87518",__operitUiPrograms_[12],[{
     ...props,
     /** Returns the real commit result to the existing generic Compose action channel without a synthetic receiver. */
     onClick: () => __async(null, null, function* () {
       return selectorResultJson(yield controller.select(option.key));
     })
-  },contents],__operitUiTemplate_85886);
+  },contents]);
 }
 function selectorView(ctx, input, state, controller) {
   const title = input.kind === "card" ? "\u5207\u6362\u89D2\u8272\u5361" : input.kind === "group" ? "\u5207\u6362\u7FA4\u7EC4" : "\u5207\u6362\u89D2\u8272\u5361\u6216\u7FA4\u7EC4";
   const colors = ctx.MaterialTheme.colorScheme;
-  const header = OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86482",[[
-    OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86618",[title],__operitUiTemplate_86618),
-    ...state.data === null ? [] : [OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86734",[state.data.options.length + " \u4E2A",colors.onSurfaceVariant],__operitUiTemplate_86734), OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86849",null,__operitUiTemplate_86849)],
-    OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:86883",[state.switchingKey === null && !state.finished,() => selectorResultJson(controller.cancel()),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87208",null,__operitUiTemplate_87208)],__operitUiTemplate_86883)
-  ]],__operitUiTemplate_86482);
+  const header = OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88114",__operitUiPrograms_[17],[[
+    OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88250",__operitUiPrograms_[13],[title]),
+    ...state.data === null ? [] : [OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88366",__operitUiPrograms_[14],[state.data.options.length + " \u4E2A",colors.onSurfaceVariant]), OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88481",__operitUiPrograms_[15],[])],
+    OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88515",__operitUiPrograms_[16],[state.switchingKey === null && !state.finished,() => selectorResultJson(controller.cancel())])
+  ]]);
   let body;
-  if (state.loading) body = OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87332",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87406",null,__operitUiTemplate_87406)],__operitUiTemplate_87332);
-  else if (state.data === null) body = OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87523",[state.error,colors.error],__operitUiTemplate_87523);
-  else if (state.data.options.length === 0) body = OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:87714",[input.kind === "group" ? "\u6682\u65E0\u7FA4\u7EC4" : "\u6682\u65E0\u89D2\u8272\u5361",colors.onSurfaceVariant],__operitUiTemplate_87714);
+  if (state.loading) body = OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88964",__operitUiPrograms_[18],[]);
+  else if (state.data === null) body = OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89155",__operitUiPrograms_[19],[state.error,colors.error]);
+  else if (state.data.options.length === 0) body = OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89346",__operitUiPrograms_[20],[input.kind === "group" ? "\u6682\u65E0\u7FA4\u7EC4" : "\u6682\u65E0\u89D2\u8272\u5361",colors.onSurfaceVariant]);
   else {
     const options = state.data.options;
     const items = ctx.lazyItems(
       { key: "selector-records", itemCount: options.length, itemExtent: 56, initialItemCount: 24 },
       /** Builds one keyed row only when it enters the materialized viewport window. */
-      (index) => OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88244",["selector-item:" + options[index].key,[
+      (index) => OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89876",__operitUiPrograms_[22],["selector-item:" + options[index].key,[
         selectorRow(ctx, options[index], state, controller),
-        ...index + 1 === options.length ? [] : [OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88437",[colors.outlineVariant.copy({ alpha: 0.45 })],__operitUiTemplate_88437)]
-      ]],__operitUiTemplate_88244)
+        ...index + 1 === options.length ? [] : [OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:90069",__operitUiPrograms_[21],[colors.outlineVariant.copy({ alpha: 0.45 })])]
+      ]])
     );
-    body = OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88560",[{ key: "selector-records", weight: 1, fillMaxWidth: true, paddingStart: 8, paddingTop: 4, paddingEnd: 8, paddingBottom: 8, ...items }],__operitUiTemplate_88560);
+    body = OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:90192",__operitUiPrograms_[23],[{ key: "selector-records", weight: 1, fillMaxWidth: true, paddingStart: 8, paddingTop: 4, paddingEnd: 8, paddingBottom: 8, ...items }]);
   }
-  return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:88727",[state.switchingKey === null,state.switchingKey === null,() => controller.load(),() => selectorResultJson(controller.cancel()),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89378",[ctx.Modifier.widthIn({ maxWidth: 360 }).heightIn({ minHeight: 420, maxHeight: 420 }),[
+  return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:90359",__operitUiPrograms_[26],[state.switchingKey === null,state.switchingKey === null,() => controller.load(),() => selectorResultJson(controller.cancel()),({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"widthIn",args:[{ maxWidth: 360 }]}]).concat([{name:"heightIn",args:[{ minHeight: 420, maxHeight: 420 }]}])}),[
     header,
-    OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89543",null,__operitUiTemplate_89543),
+    OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:91175",__operitUiPrograms_[24],[]),
     body,
-    ...state.error === "" || state.data === null ? [] : [OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:89654",[state.error,colors.error],__operitUiTemplate_89654)]
-  ]],__operitUiTemplate_89378)],__operitUiTemplate_88727);
+    ...state.error === "" || state.data === null ? [] : [OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/selection/index.ui.js:91286",__operitUiPrograms_[25],[state.error,colors.error])]
+  ]]);
 }
 function renderSelectionScreen(ctx) {
   const [presentation] = ctx.useState("presentation", null);
@@ -2064,37 +2094,3 @@ function renderSelectionScreen(ctx) {
 function Screen(ctx) {
   return renderSelectionScreen(ctx);
 }
-
-function __operitUiTemplate_83463(__ctx,__values){return __ctx.UI.Image(__values[0]); }
-function __operitUiTemplate_83645(__ctx,__values){return __ctx.UI.Icon({name:"Person",size:22,tint:"onSurfaceVariant",contentDescription:__values[0]}); }
-function __operitUiTemplate_83579(__ctx,__values){return __ctx.UI.Box({width:28,height:28,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_83750(__ctx,__values){return __ctx.UI.Image(__values[0]); }
-function __operitUiTemplate_83901(__ctx,__values){return __ctx.UI.Icon({name:"SmartToy",size:22,tint:"onSurfaceVariant",contentDescription:__values[0]}); }
-function __operitUiTemplate_83835(__ctx,__values){return __ctx.UI.Box({width:28,height:28,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_84104(__ctx,__values){return __ctx.UI.Icon({name:"Groups",size:22,tint:"onSurfaceVariant",contentDescription:__values[0]}); }
-function __operitUiTemplate_84038(__ctx,__values){return __ctx.UI.Box({width:28,height:28,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_85095(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",maxLines:1,overflow:"ellipsis",color:__values[1],fontWeight:__values[2]}); }
-function __operitUiTemplate_85285(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"labelSmall",maxLines:1,overflow:"ellipsis",color:__values[1]}); }
-function __operitUiTemplate_85028(__ctx,__values){return __ctx.UI.Column({weight:1,horizontalAlignment:"start"},__values[0]); }
-function __operitUiTemplate_85499(__ctx,__values){return __ctx.UI.CircularProgressIndicator({width:16,height:16,strokeWidth:2}); }
-function __operitUiTemplate_85577(__ctx,__values){return __ctx.UI.Icon({name:__values[0],size:__values[1],tint:__values[2],contentDescription:__values[3]}); }
-function __operitUiTemplate_85421(__ctx,__values){return __ctx.UI.Box({width:20,height:20,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_85848(__ctx,__values){return __ctx.UI.Row(__values[0],__values[1]); }
-function __operitUiTemplate_85886(__ctx,__values){return __ctx.UI.Row(__values[0],__values[1]); }
-function __operitUiTemplate_86618(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"titleSmall",fontWeight:"700",weight:1}); }
-function __operitUiTemplate_86734(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"labelSmall",color:__values[1]}); }
-function __operitUiTemplate_86849(__ctx,__values){return __ctx.UI.Spacer({width:2}); }
-function __operitUiTemplate_87208(__ctx,__values){return __ctx.UI.Icon({name:"Close",size:18,contentDescription:"\u5173\u95ED"}); }
-function __operitUiTemplate_86883(__ctx,__values){return __ctx.UI.IconButton({key:"selector-close",enabled:__values[0],width:32,height:32,onClick:__values[1]},__values[2]); }
-function __operitUiTemplate_86482(__ctx,__values){return __ctx.UI.Row({fillMaxWidth:true,paddingStart:16,paddingTop:8,paddingEnd:8,paddingBottom:4,verticalAlignment:"center"},__values[0]); }
-function __operitUiTemplate_87406(__ctx,__values){return __ctx.UI.CircularProgressIndicator({width:20,height:20,strokeWidth:2}); }
-function __operitUiTemplate_87332(__ctx,__values){return __ctx.UI.Box({weight:1,fillMaxWidth:true,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_87523(__ctx,__values){return __ctx.UI.Text({key:"selector-load-error",text:__values[0],color:__values[1],paddingHorizontal:16,paddingVertical:18,weight:1}); }
-function __operitUiTemplate_87714(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",color:__values[1],paddingStart:16,paddingTop:18,paddingEnd:16,paddingBottom:20,weight:1}); }
-function __operitUiTemplate_88437(__ctx,__values){return __ctx.UI.HorizontalDivider({thickness:1,color:__values[0]}); }
-function __operitUiTemplate_88244(__ctx,__values){return __ctx.UI.Column({key:__values[0],fillMaxWidth:true},__values[1]); }
-function __operitUiTemplate_88560(__ctx,__values){return __ctx.UI.LazyColumn(__values[0]); }
-function __operitUiTemplate_89543(__ctx,__values){return __ctx.UI.HorizontalDivider({thickness:1}); }
-function __operitUiTemplate_89654(__ctx,__values){return __ctx.UI.Text({key:"selector-commit-error",text:__values[0],color:__values[1],style:"bodySmall",paddingHorizontal:16,paddingVertical:8}); }
-function __operitUiTemplate_89378(__ctx,__values){return __ctx.UI.Column({fillMaxWidth:true,height:420,modifier:__values[0]},__values[1]); }
-function __operitUiTemplate_88727(__ctx,__values){return __ctx.UI.Dialog({key:"character-selection",containerColor:"surfaceContainerHigh",shape:{cornerRadius:28},closeOnDismissRequest:false,properties:{usePlatformDefaultWidth:false,dismissOnBackPress:__values[0],dismissOnClickOutside:__values[1]},onLoad:__values[2],onDismissRequest:__values[3]},__values[4]); }

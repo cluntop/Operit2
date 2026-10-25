@@ -1,5 +1,7 @@
-// @operit-compose-artifact 2
+// @operit-compose-artifact 4
 "use strict";
+var __operitUiPrograms_=[{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:70281","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,32],[0,32],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint"],[[0,"Person"],[0,24],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:70456","root":0,"nodes":[{"type":"Image","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:70612","root":0,"nodes":[{"type":"Image","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:70762","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,32],[0,32],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint"],[[0,"Person"],[0,24],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:70927","root":0,"nodes":[{"type":"Image","props":[1,0],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:71046","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,32],[0,32],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint"],[[0,"SmartToy"],[0,24],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:71243","root":0,"nodes":[{"type":"Box","props":[2,["width","height","contentAlignment"],[[0,32],[0,32],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"Icon","props":[2,["name","size","tint"],[[0,"Groups"],[0,24],[1,0]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:73159","root":0,"nodes":[{"type":"Text","props":[2,["text","color","paddingHorizontal","paddingVertical"],[[1,0],[1,1],[0,12],[0,6]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:73293","root":0,"nodes":[{"type":"Box","props":[2,["key","onLoad","modifier","fillMaxWidth","contentAlignment"],[[0,"current-character-loading"],[1,0],[1,1],[0,true],[0,"center"]]],"children":[4,1],"explicitChildren":true},{"type":"CircularProgressIndicator","props":[2,["width","height"],[[0,18],[0,18]]],"children":[0,null],"explicitChildren":false}]},{"id":"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:1varaw2:73572","root":0,"nodes":[{"type":"Row","props":[2,["key","fillMaxWidth","paddingHorizontal","paddingVertical","verticalAlignment","modifier","onClick"],[[0,"current-character"],[0,true],[0,12],[0,6],[0,"center"],[1,0],[1,1]]],"children":[3,[[1,2],[4,1],[4,2],[4,5]]],"explicitChildren":true},{"type":"Spacer","props":[2,["width"],[[0,10]]],"children":[0,null],"explicitChildren":false},{"type":"Column","props":[2,["weight"],[[0,1]]],"children":[3,[[4,3],[4,4]]],"explicitChildren":true},{"type":"Text","props":[2,["text","style","color"],[[0,"当前角色卡"],[0,"labelSmall"],[1,3]]],"children":[0,null],"explicitChildren":false},{"type":"Text","props":[2,["text","style","color","fontWeight","maxLines","overflow"],[[1,4],[0,"bodySmall"],[1,5],[0,"600"],[0,1],[0,"ellipsis"]]],"children":[0,null],"explicitChildren":false},{"type":"Icon","props":[2,["name","size","tint"],[[0,"ChevronRight"],[0,20],[1,6]]],"children":[0,null],"explicitChildren":false}]}];
+
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -51,6 +53,9 @@ function assertObject(value, label) {
 }
 function assertString(value, label) {
   if (typeof value !== "string") throw new Error(`${label} \u5FC5\u987B\u662F\u5B57\u7B26\u4E32`);
+}
+function assertBoolean(value, label) {
+  if (typeof value !== "boolean") throw new Error(`${label} \u5FC5\u987B\u662F\u5E03\u5C14\u503C`);
 }
 function assertNumber(value, label, min, max) {
   if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) throw new Error(`${label} \u5FC5\u987B\u5728 ${min} \u5230 ${max} \u4E4B\u95F4`);
@@ -154,6 +159,10 @@ function number(value, path) {
 }
 function integer(value, path) {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) throw new Error(`${path} must be a safe integer`);
+}
+function nonnegativeInteger(value, path) {
+  integer(value, path);
+  nonnegative(value, path);
 }
 function messageVariant(value, path) {
   integer(value, path);
@@ -275,8 +284,10 @@ var contentOnly = shape({ content: required(text) });
 var format = enumeration("operit", "tavern");
 var memoryQueryRequest = shape({ participantId: required(nonblank), query: required(nonblank), limit: required(nonnegative), snapshotId: required(nullable(nonblank)) });
 var validators = {
-  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(text), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
+  "memory.chunks": shape({ ownerKey: required(owner), memoryId: required(nonblank), query: required(nonblank), count: required(nonnegativeInteger) }),
+  "memory.searchWithOptions": shape({ ownerKey: required(owner), query: required(nonblank), folderPath: required(nullable(text)), relevanceThreshold: required(nonnegative), createdAtStartMs: required(nullable(integer)), createdAtEndMs: required(nullable(integer)) }),
   "memory.chat.list": ownerOnly,
+  "memory.chat.pruneMissing": ownerOnly,
   "memory.chat.update": shape({ ownerKey: required(owner), chatId: required(nonblank) }),
   "memory.categorize": ownerOnly,
   "memory.rebuild.start": shape({ ownerKey: required(owner), rebuild: required(shape({ chatIds: required(strings), windowMessageCount: required(integer), fromInclusive: required(nullable(integer)), toInclusive: required(nullable(integer)) })) }),
@@ -284,6 +295,8 @@ var validators = {
   "memory.rebuild.cancel": ownerOnly,
   "memory.embeddings.rebuild": ownerOnly,
   "memory.candidate.enqueue": shape({ chatId: required(nonblank), timestamp: required(integer), variantIndex: required(messageVariant), sourceType: required(enumeration("reply_finalized_auto", "selected_user_message")), ownerKey: required(nullable(owner)) }),
+  "memory.candidates.retryFailed": ownerOnly,
+  "memory.candidates.clearFailed": ownerOnly,
   "chat.configuration.resolve": parseChatConfigurationRequest,
   "chat.configuration.binding.read": shape({ chatId: required(nonblank) }),
   "chat.configuration.binding.write": shape({ chatId: required(nonblank), selection: required(nonblank) }),
@@ -773,6 +786,17 @@ var merge_default = {
 function userDocumentPath(ownerKey) {
   return "owners/" + encodeURIComponent(ownerKey) + "/USER.md";
 }
+var MEMORY_RECALL_LIMIT_RANGE = { min: 1, max: 50 };
+function normalizeMemoryRecallSettings(value) {
+  assertObject(value, "memory recall settings");
+  assertBoolean(value.enabled, "memory recall enabled");
+  if (value.limit !== void 0) {
+    assertInteger(value.limit, "memory recall limit", MEMORY_RECALL_LIMIT_RANGE.min);
+    if (value.limit > MEMORY_RECALL_LIMIT_RANGE.max) throw new Error("memory recall limit \u5FC5\u987B\u4E0D\u8D85\u8FC7 " + MEMORY_RECALL_LIMIT_RANGE.max);
+  }
+  if (value.allowRepeated !== void 0) assertBoolean(value.allowRepeated, "memory recall allow repeated");
+  return { enabled: value.enabled, limit: value.limit ?? 3, allowRepeated: value.allowRepeated ?? false };
+}
 
 // src/storage/records.ts
 var ownerCollections = [
@@ -853,6 +877,9 @@ function decodeStateFromRecords(metadata, rows) {
     version: metadata.version,
     active: metadata.active === null ? { Model: { id: "chat" } } : metadata.active,
     memoryPreferences: metadata.memoryPreferences,
+    // States written by the released plugin or the Core migration predate recall settings; the
+    // released default stays enabled so existing installations keep recalling after the upgrade.
+    memoryRecall: normalizeMemoryRecallSettings(metadata.memoryRecall === void 0 ? { enabled: true } : metadata.memoryRecall),
     cards: [],
     groups: [],
     tags: [],
@@ -1602,6 +1629,9 @@ function findChatBinding(chatId) {
   });
 }
 
+// src/memory-jobs/scheduler.ts
+var CANDIDATE_PROCESSING_LEASE_MS = 30 * 60 * 1e3;
+
 // src/definition.ts
 var definition = { id: "com.operit.character_cards", title: "\u89D2\u8272\u5361", icon: "Badge", order: 150 };
 var chatUiRoutes = {
@@ -1693,18 +1723,18 @@ function selectedOption(data) {
 function menuAvatar(ctx, option, unboundAvatar) {
   const props = { width: 32, height: 32, contentScale: "crop", modifier: ctx.Modifier.clip({ type: "circle" }) };
   if (option === null) {
-    if (unboundAvatar === null) return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:68649",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:68715",[ctx.MaterialTheme.colorScheme.onSurfaceVariant],__operitUiTemplate_68715)],__operitUiTemplate_68649);
-    return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:68824",[{ ...props, path: unboundAvatar, contentDescription: "\u672A\u7ED1\u5B9A" }],__operitUiTemplate_68824);
+    if (unboundAvatar === null) return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:70281",__operitUiPrograms_[0],[ctx.MaterialTheme.colorScheme.onSurfaceVariant]);
+    return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:70456",__operitUiPrograms_[1],[{ ...props, path: unboundAvatar, contentDescription: "\u672A\u7ED1\u5B9A" }]);
   }
   switch (option.avatar.type) {
     case "uri":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:68980",[{ ...props, uri: option.avatar.uri, contentDescription: option.title }],__operitUiTemplate_68980);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:70612",__operitUiPrograms_[2],[{ ...props, uri: option.avatar.uri, contentDescription: option.title }]);
     case "resource":
-      return option.avatar.path === null ? OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69130",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69196",[ctx.MaterialTheme.colorScheme.onSurfaceVariant],__operitUiTemplate_69196)],__operitUiTemplate_69130) : OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69295",[{ ...props, path: option.avatar.path, contentDescription: option.title }],__operitUiTemplate_69295);
+      return option.avatar.path === null ? OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:70762",__operitUiPrograms_[3],[ctx.MaterialTheme.colorScheme.onSurfaceVariant]) : OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:70927",__operitUiPrograms_[4],[{ ...props, path: option.avatar.path, contentDescription: option.title }]);
     case "model":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69414",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69480",[ctx.MaterialTheme.colorScheme.onSurfaceVariant],__operitUiTemplate_69480)],__operitUiTemplate_69414);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71046",__operitUiPrograms_[5],[ctx.MaterialTheme.colorScheme.onSurfaceVariant]);
     case "group":
-      return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69611",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:69677",[ctx.MaterialTheme.colorScheme.onSurfaceVariant],__operitUiTemplate_69677)],__operitUiTemplate_69611);
+      return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71243",__operitUiPrograms_[6],[ctx.MaterialTheme.colorScheme.onSurfaceVariant]);
   }
 }
 function renderChatInputMenu(ctx) {
@@ -1741,41 +1771,20 @@ function renderChatInputMenu(ctx) {
     });
   }
   const colors = ctx.MaterialTheme.colorScheme;
-  if (state.error !== "") return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71527",[state.error,colors.error],__operitUiTemplate_71527);
-  if (state.data === null) return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71661",[load,ctx.Modifier.heightIn({ minHeight: 48 }),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71824",null,__operitUiTemplate_71824)],__operitUiTemplate_71661);
+  if (state.error !== "") return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:73159",__operitUiPrograms_[7],[state.error,colors.error]);
+  if (state.data === null) return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:73293",__operitUiPrograms_[8],[load,({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 48 }]}])})]);
   const option = selectedOption(state.data);
-  return OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:71940",[ctx.Modifier.heightIn({ minHeight: 48 }),() => {
+  return OperitComposeComposition.evaluate(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:73572",__operitUiPrograms_[9],[({__modifierOps:OperitComposeNodes.modifierBase(ctx.Modifier).concat([{name:"heightIn",args:[{ minHeight: 48 }]}])}),() => {
       assertOwner();
       return {
         type: "toolpkg.ui.present",
         routeId: chatUiRoutes.selection,
         input: { mode: "select", chatId, kind: "card", selected: option !== null && option.kind !== "group" ? option.selection : null }
       };
-    },menuAvatar(ctx, option, state.unboundAvatar),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:72591",null,__operitUiTemplate_72591),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:72625",[OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:72662",[colors.onSurfaceVariant],__operitUiTemplate_72662),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:72778",[option === null ? "\u672A\u7ED1\u5B9A" : option.title,colors.onSurface],__operitUiTemplate_72778)],__operitUiTemplate_72625),OperitComposeGeneration.template(ctx,"com.operit.character_cards:dist/ui/chat-input-menu/index.ui.js:72966",[colors.onSurfaceVariant],__operitUiTemplate_72966)],__operitUiTemplate_71940);
+    },menuAvatar(ctx, option, state.unboundAvatar),colors.onSurfaceVariant,option === null ? "\u672A\u7ED1\u5B9A" : option.title,colors.onSurface,colors.onSurfaceVariant]);
 }
 
 // src/ui/chat-input-menu/index.ui.ts
 function Screen(ctx) {
   return renderChatInputMenu(ctx);
 }
-
-function __operitUiTemplate_68715(__ctx,__values){return __ctx.UI.Icon({name:"Person",size:24,tint:__values[0]}); }
-function __operitUiTemplate_68649(__ctx,__values){return __ctx.UI.Box({width:32,height:32,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_68824(__ctx,__values){return __ctx.UI.Image(__values[0]); }
-function __operitUiTemplate_68980(__ctx,__values){return __ctx.UI.Image(__values[0]); }
-function __operitUiTemplate_69196(__ctx,__values){return __ctx.UI.Icon({name:"Person",size:24,tint:__values[0]}); }
-function __operitUiTemplate_69130(__ctx,__values){return __ctx.UI.Box({width:32,height:32,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_69295(__ctx,__values){return __ctx.UI.Image(__values[0]); }
-function __operitUiTemplate_69480(__ctx,__values){return __ctx.UI.Icon({name:"SmartToy",size:24,tint:__values[0]}); }
-function __operitUiTemplate_69414(__ctx,__values){return __ctx.UI.Box({width:32,height:32,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_69677(__ctx,__values){return __ctx.UI.Icon({name:"Groups",size:24,tint:__values[0]}); }
-function __operitUiTemplate_69611(__ctx,__values){return __ctx.UI.Box({width:32,height:32,contentAlignment:"center"},__values[0]); }
-function __operitUiTemplate_71527(__ctx,__values){return __ctx.UI.Text({text:__values[0],color:__values[1],paddingHorizontal:12,paddingVertical:6}); }
-function __operitUiTemplate_71824(__ctx,__values){return __ctx.UI.CircularProgressIndicator({width:18,height:18}); }
-function __operitUiTemplate_71661(__ctx,__values){return __ctx.UI.Box({key:"current-character-loading",onLoad:__values[0],modifier:__values[1],fillMaxWidth:true,contentAlignment:"center"},__values[2]); }
-function __operitUiTemplate_72591(__ctx,__values){return __ctx.UI.Spacer({width:10}); }
-function __operitUiTemplate_72662(__ctx,__values){return __ctx.UI.Text({text:"\u5F53\u524D\u89D2\u8272\u5361",style:"labelSmall",color:__values[0]}); }
-function __operitUiTemplate_72778(__ctx,__values){return __ctx.UI.Text({text:__values[0],style:"bodySmall",color:__values[1],fontWeight:"600",maxLines:1,overflow:"ellipsis"}); }
-function __operitUiTemplate_72625(__ctx,__values){return __ctx.UI.Column({weight:1},[__values[0],__values[1]]); }
-function __operitUiTemplate_72966(__ctx,__values){return __ctx.UI.Icon({name:"ChevronRight",size:20,tint:__values[0]}); }
-function __operitUiTemplate_71940(__ctx,__values){return __ctx.UI.Row({key:"current-character",fillMaxWidth:true,paddingHorizontal:12,paddingVertical:6,verticalAlignment:"center",modifier:__values[0],onClick:__values[1]},[__values[2],__values[3],__values[4],__values[5]]); }

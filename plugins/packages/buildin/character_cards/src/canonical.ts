@@ -34,6 +34,10 @@ export interface CharacterRepository {
     key: keyof import("./model").GlobalMemoryPreferences,
     value: boolean,
   ): Promise<import("./model").GlobalMemoryPreferences>;
+  readMemoryRecallSettings(): Promise<import("./model").MemoryRecallSettings>;
+  writeMemoryRecallSettings(
+    settings: import("./model").MemoryRecallSettings,
+  ): Promise<import("./model").MemoryRecallSettings>;
   searchMemoryDebug(
     options: MemorySearchOptions,
     config: MemorySearchConfig,
@@ -139,6 +143,8 @@ export interface CharacterRepository {
     id: string,
     values: MemoryValues,
   ): Promise<Memory>;
+  /** Combines all exact source-title matches into a new textual record and redirects their relationships. */
+  mergeMemories(ownerKey: string, sourceTitles: string[], values: MemoryValues): Promise<Memory>;
   /** Deletes a memory together with its chunks and links. */
   deleteMemory(ownerKey: string, id: string): Promise<void>;
   /** Moves selected memories in the same operation. */
@@ -194,6 +200,7 @@ export interface CharacterRepository {
 export interface CharacterRepositoryOwner extends Pick<
   CharacterRepository,
   | "readGlobalMemoryPreferences"
+  | "readMemoryRecallSettings"
   | "readActive"
   | "listCharacters"
   | "listGroups"

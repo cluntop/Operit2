@@ -3,7 +3,7 @@ import type { CharacterRepository } from "./canonical";
 import type { ActivePrompt, BackupImportResult, Card, ChatBinding, CharacterDirectories, CharacterState, ConversationGroupRecord, Group, Memory, MemoryAutoSaveStatus, MemoryGraph, MemoryImportResult, MemoryLink, MemoryLinkUpdate, MemoryLinkValues, MemoryRebuildProgress, MemorySearchConfig, MemorySearchOptions, MemorySettings, MemorySpace, MemoryValues, ModelSummary, Store, Tag, TagValues, ToolCatalog, TtsConfig, UserDocument, UserDocumentWrite } from "./model";
 import { assertBoolean, assertCard, assertConversationGroups, assertGroup, assertMemory, assertMemorySettings, assertMemoryValues, assertNumber, assertSearchConfig, assertSearchOptions, assertString, assertTag, assertTagValues, normalizeNames, requireId, requireName } from "./validation";
 import { clone } from "./storage/records";
-import { createMemorySpace, assertMemorySpace } from "./storage/state";
+import { createMemorySpace, assertMemorySpace, normalizeMemoryRecallSettings } from "./storage/state";
 import { searchMemorySpace, searchMemorySpaceDebug } from "./memory-search";
 import { requireChatSelection } from "./chat-bindings";
 import { deleteChatBinding, listChatBindings, readChatBinding, writeChatBinding } from "./chat-storage";
@@ -47,6 +47,10 @@ export class RepositorySession implements CharacterRepository {
   async writeGlobalMemoryPreference(key: keyof import("./model").GlobalMemoryPreferences, value: boolean): Promise<import("./model").GlobalMemoryPreferences> {
     if (key !== "userDescriptionEnabled" && key !== "autoUpdateEnabled") throw new Error("Unknown global memory preference");
     assertBoolean(value, key); this.state.memoryPreferences[key] = value; return this.readGlobalMemoryPreferences();
+  }
+  async readMemoryRecallSettings(): Promise<import("./model").MemoryRecallSettings> { return copy(this.state.memoryRecall); }
+  async writeMemoryRecallSettings(settings: import("./model").MemoryRecallSettings): Promise<import("./model").MemoryRecallSettings> {
+    this.state.memoryRecall = normalizeMemoryRecallSettings(settings); return this.readMemoryRecallSettings();
   }
   async searchMemoryDebug(options: MemorySearchOptions, config: MemorySearchConfig): Promise<import("./model").MemorySearchDebug> {
     assertSearchOptions(options); assertSearchConfig(config); return copy(await searchMemorySpaceDebug(this.space(options.ownerKey), options, config));
@@ -336,6 +340,41 @@ export class RepositorySession implements CharacterRepository {
       /** Allocates the explicit replacement tag list without changing the memory identity. */
       name => ({ id: uuid(), name }),
     ) });
+  }
+  /** Replaces every exact source-title match with a new identity and redirects surviving external links. */
+  async mergeMemories(ownerKey: string, sourceTitles: string[], values: MemoryValues): Promise<Memory> {
+    assertMemoryValues(values);
+    const space = this.space(ownerKey), titles = new Set<string>();
+    for (const title of sourceTitles) titles.add(requireName(title, "merge source title"));
+    const ids = new Set<string>(), uuids = new Set<string>(), found = new Set<string>();
+    for (const memory of space.memories) if (titles.has(memory.title)) {
+      ids.add(memory.id); uuids.add(memory.uuid); found.add(memory.title);
+    }
+    for (const title of titles) if (!found.has(title)) throw new Error("Memory merge source does not exist: " + title);
+    if (ids.size < 2) throw new Error("Memory merge requires at least two unique source records");
+    const remaining = space.memories.filter(
+      /** Retains only records outside the explicitly selected merge. */
+      memory => !ids.has(memory.id),
+    );
+    if (remaining.some(
+      /** Rejects a target title already held by an unrelated record. */
+      memory => memory.title === values.title.trim(),
+    )) throw new Error("Name already exists: " + values.title);
+    space.memories = remaining;
+    const merged = await this.createMemory(ownerKey, values);
+    space.chunks = space.chunks.filter(
+      /** Deletes chunks owned by source documents as Kotlin mergeMemories does. */
+      chunk => !uuids.has(chunk.memoryUuid),
+    );
+    for (const link of space.links) {
+      if (ids.has(link.sourceMemoryId)) link.sourceMemoryId = merged.id;
+      if (ids.has(link.targetMemoryId)) link.targetMemoryId = merged.id;
+    }
+    space.links = space.links.filter(
+      /** Removes internal relationships that would become forbidden self-links. */
+      link => link.sourceMemoryId !== link.targetMemoryId,
+    );
+    return merged;
   }
   /** Deletes a memory and all referencing chunks and links in this operation. */
   async deleteMemory(ownerKey: string, id: string): Promise<void> {

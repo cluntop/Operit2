@@ -24,7 +24,7 @@ use operit_host_api::HostManager::{
 use operit_host_api::TimeUtils::currentTimeMillis;
 use operit_host_api::{HostRuntimeEventRegistration, HostRuntimeTaskSchedulerHost};
 #[cfg(feature = "javascript")]
-use operit_js_bridge::javascript::JsExecutionProvider::QuickJsExecutionProvider;
+use operit_js_bridge::javascript::JsExecutionProvider::HostJsExecutionProvider;
 use operit_providers::chat::llmprovider::ModelConfigConnectionTester::ModelConnectionTestReport;
 use operit_providers::runtime_support::ProviderRuntimeContext;
 use operit_store::sync::SqlChatSyncStore::{SqlChatSyncStore, CHAT_SYNC_DOMAIN};
@@ -32,7 +32,7 @@ use operit_store::CoreNodeBindingStore::{CoreNodeBindingStore, BINDING_SYNC_DOMA
 use operit_store::NetworkControlStore::{NetworkControlStore, NETWORK_CONTROL_SYNC_DOMAIN};
 use operit_store::PluginStorage::{self, PLUGIN_STORAGE_SYNC_DOMAIN};
 use operit_store::PreferencesDataStore::{Flow, StateFlow};
-use operit_store::PreferenceMerge::{applyIndependentOperations, PreferenceMergeContext};
+use operit_store::PreferenceMerge::applyIndependentOperations;
 use operit_store::RuntimeFileSyncStore::{
     RuntimeFileSyncReference, RuntimeFileSyncStore, RUNTIME_FILE_SYNC_DOMAIN,
 };
@@ -204,7 +204,7 @@ impl OperitApplication {
         #[cfg(feature = "javascript")]
         let toolRuntimeDependencies = ToolRuntimeDependencies::new(
             runtimeToolSupport.clone(),
-            Arc::new(QuickJsExecutionProvider::new()),
+            Arc::new(HostJsExecutionProvider::new()),
         );
         let toolHandler = AIToolHandler::new(hostManager.clone(), toolRuntimeDependencies.clone());
         let toolPkgBridgeRuntime =
@@ -583,17 +583,7 @@ impl OperitApplication {
             {
                 continue;
             }
-            let scope = if record
-                .settings
-                .get("builtin")
-                .and_then(serde_json::Value::as_bool)
-                == Some(true)
-                && record.settings.get("installationScope").is_none()
-            {
-                "builtin".to_string()
-            } else {
-                record.scope.clone()
-            };
+            let scope = record.scope.clone();
             if result.insert(record.id.clone(), scope.clone()).is_some() {
                 return Err(format!(
                     "Extension ownership conflict: {} exists in both locations",
@@ -846,6 +836,7 @@ impl OperitApplication {
             errors.push(format!("workspace scan: {error}"));
         }
         let store = self.runtimeSyncOperationStore()?;
+        errors.extend(store.publishPreferenceOutboxes().map_err(|error| error.to_string())?);
         let mut receipt = store.receipt().map_err(|error| error.to_string())?;
         match SqlChatSyncStore::default()
             .map_err(|error| error.to_string())
@@ -1006,7 +997,6 @@ impl OperitApplication {
     pub fn syncApplyOperations(
         &self,
         operations: serde_json::Value,
-        complete: bool,
     ) -> Result<serde_json::Value, String> {
         let operations: Vec<SyncOperation> =
             serde_json::from_value(operations).map_err(|error| error.to_string())?;
@@ -1025,43 +1015,32 @@ impl OperitApplication {
             .ok_or("RuntimeStorageHost is not registered for persistent sync")?;
         let mut errors = Vec::new();
         let mut applied = Vec::new();
-        let mut preferenceContext = PreferenceMergeContext::default();
+        let mut preferenceReferences = std::collections::BTreeMap::new();
         let preferences = pending
             .iter()
             .filter(|operation| operation.domain == "preferences")
             .cloned()
             .collect::<Vec<_>>();
         if !preferences.is_empty()
-            || complete
             || pending
                 .iter()
                 .any(|operation| operation.domain == PLUGIN_STORAGE_SYNC_DOMAIN)
         {
-            match store.preferenceHistory() {
+            match store.preferenceMergeHistory() {
                 Err(error) => {
                     errors.push(format!("preference history: {error}"));
-                    preferenceContext.historyError = Some(error.to_string());
                 }
-                Ok(mut history) => {
-                    history.extend(preferences.clone());
+                Ok(history) => {
                     for outcome in applyIndependentOperations(
                         storage.clone(),
-                        &PreferenceSpaceMerge::schema(),
+                        &PreferenceSpaceMerge::schema(&history.iter().chain(&preferences).cloned().collect::<Vec<_>>()),
                         &history,
                         &preferences,
                         |path, key| !isRetiredCharacterPreferenceKey(path, key),
-                        complete,
                     ) {
-                        let result = outcome.result.and_then(|map| {
-                            store
-                                .recordAppliedOperations(&outcome.operations)
-                                .and_then(|_| store.appendOperations(&outcome.operations))
-                                .map_err(|error| error.to_string())?;
-                            Ok(map)
-                        });
-                        match result {
+                        match outcome.result {
                             Ok(map) => {
-                                preferenceContext.references.extend(map);
+                                preferenceReferences.extend(map);
                                 applied.extend(outcome.operations);
                             }
                             Err(error) => {
@@ -1069,7 +1048,6 @@ impl OperitApplication {
                                     "preferences paths={}: {error}",
                                     outcome.paths.iter().cloned().collect::<Vec<_>>().join(",")
                                 ));
-                                preferenceContext.failedPaths.extend(outcome.paths);
                             }
                         }
                     }
@@ -1082,11 +1060,11 @@ impl OperitApplication {
             .filter(|operation| operation.domain != "preferences")
         {
             let ordered = operation.semantics == SyncOperationSemantics::Transaction;
-            if ordered
-                && blocked.contains(&(operation.originDeviceId.clone(), operation.domain.clone()))
-            {
-                continue;
-            }
+            let dataset = match synchronizationDataset(operation) {
+                Ok(dataset) => (operation.originDeviceId.clone(), operation.domain.clone(), dataset),
+                Err(error) => { errors.push(format!("dataset op={}: {error}", operation.opId)); continue; }
+            };
+            if ordered && blocked.contains(&dataset) { continue; }
             let result = (|| -> Result<(), String> {
                 if isRetiredCharacterOperation(operation) {
                     return Err("Retired Core data requires its owner's migration".into());
@@ -1104,7 +1082,7 @@ impl OperitApplication {
                         self.pluginSqliteHost()?,
                         storage.clone(),
                         operation,
-                        &preferenceContext,
+                        &preferenceReferences,
                     )
                     .map_err(|error| error.to_string()),
                     _ => {
@@ -1134,7 +1112,7 @@ impl OperitApplication {
                 Ok(()) => applied.push(operation.clone()),
                 Err(error) => {
                     if ordered {
-                        blocked.insert((operation.originDeviceId.clone(), operation.domain.clone()));
+                        blocked.insert(dataset);
                     }
                     errors.push(format!(
                         "domain={} op={} origin={} sequence={}: {error}",
@@ -1150,9 +1128,9 @@ impl OperitApplication {
             .pendingOperations()
             .map_err(|error| error.to_string())?
             .len();
-        if !preferenceContext.references.is_empty() {
+        if !preferenceReferences.is_empty() {
             if let Err(error) = self.pluginSqliteHost().and_then(|host| {
-                PluginStorage::reconcilePreferenceReferences(host, &preferenceContext.references)
+                PluginStorage::reconcilePreferenceReferences(host, &preferenceReferences)
                     .map_err(|error| error.to_string())
             }) {
                 errors.push(format!("plugin_storage reconcile: {error}"));
@@ -1479,6 +1457,17 @@ fn setHostManager(hostManager: HostManager) {
         .get_or_init(|| Mutex::new(None))
         .lock()
         .expect("HostManager context mutex poisoned") = Some(hostManager);
+}
+
+/// Resolves each owner's declared durable commit boundary for ordered failure isolation.
+fn synchronizationDataset(operation: &SyncOperation) -> Result<String, String> {
+    match operation.domain.as_str() {
+        CHAT_SYNC_DOMAIN => synchronizedChatId(operation).ok_or_else(|| "Chat transaction dataset is missing".into()),
+        PLUGIN_STORAGE_SYNC_DOMAIN => PluginStorage::syncDatasetPath(operation).map_err(|error| error.to_string()),
+        NETWORK_CONTROL_SYNC_DOMAIN => operation.payload.get("spaceId").and_then(serde_json::Value::as_str)
+            .map(str::to_owned).ok_or_else(|| "Network control Space identity is missing".into()),
+        _ => serde_json::to_string(&(&operation.entityType, &operation.entityId)).map_err(|error| error.to_string()),
+    }
 }
 
 /// Extracts the chat id addressed by one SQL synchronization operation.

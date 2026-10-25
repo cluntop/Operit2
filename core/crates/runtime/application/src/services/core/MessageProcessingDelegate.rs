@@ -1,4 +1,5 @@
 use operit_store::ChatExecutionLease::ChatExecutionLease;
+use crate::plugins::toolpkg::ToolPkgChatResponseHookBridge::{ToolPkgChatResponseHookBridge, PRESENTATION_EXTENSION};
 use std::collections::{HashMap, HashSet};
 
 use std::sync::{Arc, Mutex};
@@ -33,7 +34,7 @@ use operit_model::ChatMessageTimestampAllocator::ChatMessageTimestampAllocator;
 use operit_model::ChatTurnOptions::{ChatTurnContinuation, ChatTurnOptions};
 use operit_model::FunctionType::FunctionType;
 use operit_model::InputProcessingState::InputProcessingState;
-use operit_model::MessagePart::MessagePart;
+use operit_model::MessagePart::{MessagePart, MessagePartKind};
 use operit_model::MessagePartCodec::{AssistantMarkupStreamState, MessagePartCodec};
 use operit_model::PromptFunctionType::PromptFunctionType;
 use operit_model::PromptTurn::PromptTurn;
@@ -52,6 +53,7 @@ use operit_util::stream::Stream::Stream;
 use operit_util::stream::TextStreamRevisionTracker::TextStreamRevisionTracker;
 use operit_util::AppLogger::AppLogger;
 use operit_util::ChainLogger::{self, MESSAGE_STORE_CHAIN, RECEIVE_CHAIN, SEND_CHAIN};
+use operit_util::ChatMarkupRegex::tag_ranges;
 use operit_util::MarkdownRenderStream::{MarkdownRenderEventStream, MarkdownStreamEvent};
 
 /// Maximum text length used when preparing automatic speech previews.
@@ -74,7 +76,6 @@ fn openCoreResponseStream(
     request: CoreWatchRequest,
 ) -> Result<CoreEventStream, CoreLinkError> {
     let (sender, receiver) = CoreEventStream::channel();
-    let mut orderedStream = stream;
     AppLogger::trace(
         "CoreStreamTrace",
         &format!(
@@ -89,87 +90,106 @@ fn openCoreResponseStream(
         .scheduleHostRuntimeAsyncTask(
             "core-runtime-text-markdown",
             Box::new(move || {
-                Box::pin(async move {
-                    let mut markdownStream = MarkdownRenderEventStream::new(streamKey.clone());
-                    let mut textRevisions = TextStreamRevisionTracker::new("");
-                    let mut itemCollector = |item: ResponseStreamItem| match item {
-                        ResponseStreamItem::Chunk(chunk) => {
-                            let _ = textRevisions.append(&chunk);
-                            let events = markdownStream.pushChunk(&chunk);
-                            for event in events {
-                                sendCoreTextEvent(
-                                    &sender,
-                                    &request.requestId,
-                                    request.target.clone(),
-                                    &request.propertyName,
-                                    CoreEventKind::Changed,
-                                    operit_link::toCoreValue(event)
-                                        .expect("MarkdownStreamEvent must serialize"),
-                                );
-                            }
-                        }
-                        ResponseStreamItem::Revision(event) => {
-                            let markdownEvent = match event.event_type {
-                                operit_util::stream::RevisableTextStream::TextStreamEventType::Savepoint => {
-                                    textRevisions.savepoint(&event.id);
-                                    AppLogger::trace_detail(
-                                        "CoreStreamTrace",
-                                        &format!(
-                                            "response.revision.savepoint streamKey={} id={}",
-                                            streamKey, event.id
-                                        ),
-                                    );
-                                    MarkdownStreamEvent::savepoint(streamKey.clone(), event.id)
-                                }
-                                operit_util::stream::RevisableTextStream::TextStreamEventType::Rollback => {
-                                    let content = textRevisions.rollback(&event.id).expect(
-                                        "markdown rollback must reference an active savepoint",
-                                    );
-                                    markdownStream.restoreContent(content);
-                                    AppLogger::trace_detail(
-                                        "CoreStreamTrace",
-                                        &format!(
-                                            "response.revision.rollback streamKey={} id={}",
-                                            streamKey, event.id
-                                        ),
-                                    );
-                                    MarkdownStreamEvent::rollback(streamKey.clone(), event.id)
-                                }
-                            };
-                            sendCoreTextEvent(
-                                &sender,
-                                &request.requestId,
-                                request.target.clone(),
-                                &request.propertyName,
-                                CoreEventKind::Changed,
-                                operit_link::toCoreValue(markdownEvent)
-                                    .expect("MarkdownStreamEvent must serialize"),
-                            );
-                        }
-                    };
-                    orderedStream.collect_ordered(&mut itemCollector).await;
-                    let completionValue = operit_link::toCoreValue(markdownStream.completed())
-                        .expect("MarkdownStreamEvent must serialize");
-                    AppLogger::trace(
-                        "CoreStreamTrace",
-                        &format!(
-                            "response.completed requestId={} streamKey={}",
-                            request.requestId.0, streamKey
-                        ),
-                    );
-                    sendCoreTextEvent(
-                        &sender,
-                        &request.requestId,
-                        request.target.clone(),
-                        &request.propertyName,
-                        CoreEventKind::Completed,
-                        completionValue,
-                    );
-                })
+                Box::pin(collectCoreResponseStream(stream, streamKey, request, sender))
             }),
         )
         .map_err(|error| CoreLinkError::internal(error.to_string()))?;
     Ok(receiver)
+}
+
+/// Transforms one observer's stream until its receiver closes or generation completes.
+async fn collectCoreResponseStream(
+    mut orderedStream: SharedAiResponseStream,
+    streamKey: String,
+    request: CoreWatchRequest,
+    sender: tokio::sync::mpsc::UnboundedSender<CoreEvent>,
+) {
+    let mut markdownStream = MarkdownRenderEventStream::new(streamKey.clone());
+    let mut textRevisions = TextStreamRevisionTracker::new("");
+    let mut itemCollector = |item: ResponseStreamItem| match item {
+        ResponseStreamItem::Chunk(chunk) => {
+            let _ = textRevisions.append(&chunk);
+            let events = markdownStream.pushChunk(&chunk);
+            for event in events {
+                sendCoreTextEvent(
+                    &sender,
+                    &request.requestId,
+                    request.target.clone(),
+                    &request.propertyName,
+                    CoreEventKind::Changed,
+                    operit_link::toCoreValue(event).expect("MarkdownStreamEvent must serialize"),
+                );
+            }
+        }
+        ResponseStreamItem::Revision(event) => {
+            let markdownEvent = match event.event_type {
+                operit_util::stream::RevisableTextStream::TextStreamEventType::Savepoint => {
+                    textRevisions.savepoint(&event.id);
+                    AppLogger::trace_detail(
+                        "CoreStreamTrace",
+                        &format!(
+                            "response.revision.savepoint streamKey={} id={}",
+                            streamKey, event.id
+                        ),
+                    );
+                    MarkdownStreamEvent::savepoint(streamKey.clone(), event.id)
+                }
+                operit_util::stream::RevisableTextStream::TextStreamEventType::Rollback => {
+                    match textRevisions.rollback(&event.id) {
+                        Some(content) => markdownStream.restoreContent(content),
+                        None => {
+                            AppLogger::w(
+                                "CoreStreamTrace",
+                                &format!(
+                                    "markdown rollback savepoint missing; keeping current content streamKey={} id={}",
+                                    streamKey, event.id
+                                ),
+                            );
+                        }
+                    }
+                    AppLogger::trace_detail(
+                        "CoreStreamTrace",
+                        &format!(
+                            "response.revision.rollback streamKey={} id={}",
+                            streamKey, event.id
+                        ),
+                    );
+                    MarkdownStreamEvent::rollback(streamKey.clone(), event.id)
+                }
+            };
+            sendCoreTextEvent(
+                &sender,
+                &request.requestId,
+                request.target.clone(),
+                &request.propertyName,
+                CoreEventKind::Changed,
+                operit_link::toCoreValue(markdownEvent)
+                    .expect("MarkdownStreamEvent must serialize"),
+            );
+        }
+    };
+    tokio::select! {
+        biased;
+        _ = sender.closed() => return,
+        _ = orderedStream.collect_ordered(&mut itemCollector) => {},
+    }
+    let completionValue = operit_link::toCoreValue(markdownStream.completed())
+        .expect("MarkdownStreamEvent must serialize");
+    AppLogger::trace(
+        "CoreStreamTrace",
+        &format!(
+            "response.completed requestId={} streamKey={}",
+            request.requestId.0, streamKey
+        ),
+    );
+    sendCoreTextEvent(
+        &sender,
+        &request.requestId,
+        request.target.clone(),
+        &request.propertyName,
+        CoreEventKind::Completed,
+        completionValue,
+    );
 }
 
 /// Sends one typed Markdown event through a Core stream channel.
@@ -181,29 +201,14 @@ fn sendCoreTextEvent(
     kind: CoreEventKind,
     value: CoreValue,
 ) {
-    if sender
-        .send(CoreEvent {
-            requestId: Some(requestId.clone()),
-            target: target.clone(),
-            propertyName: propertyName.to_string(),
-            kind,
-            value,
-        })
-        .is_err()
-    {
-        AppLogger::e(
-            "CoreStreamTrace",
-            &format!(
-                "response.event.receiver_closed requestId={} target={} property={}",
-                requestId.0, target, propertyName
-            ),
-        );
-    }
-}
-
-/// Builds the localized host notice for a timed-out ToolPkg pre-send hook.
-fn buildToolPkgHookTimeoutNotice(pluginIdentifier: String) -> String {
-    format!("前置插件「{pluginIdentifier}」响应超时，已跳过并继续发送")
+    // A disposed observer owns no output channel; its producer remains independent.
+    let _ = sender.send(CoreEvent {
+        requestId: Some(requestId.clone()),
+        target,
+        propertyName: propertyName.to_string(),
+        kind,
+        value,
+    });
 }
 
 /// Waits for the actual originating stream and persistence completion without retaining the chat holder lock.
@@ -1323,10 +1328,6 @@ impl MessageProcessingDelegate {
         );
 
         let buildUserMessageStartTime = messageTimingNow();
-        let nonFatalErrorEventFlow = self.nonFatalErrorEventFlow.clone();
-        let onHookTimeout = Arc::new(move |pluginIdentifier: String| {
-            nonFatalErrorEventFlow.set_value(Some(buildToolPkgHookTimeoutNotice(pluginIdentifier)));
-        });
         let finalMessageContent =
             AIMessageManager::buildUserMessageContent(BuildUserMessageContentRequest {
                 messageText: request.messageText,
@@ -1340,7 +1341,6 @@ impl MessageProcessingDelegate {
                 enableDirectVideoProcessing,
                 chatId: Some(request.chatId.clone()),
                 participantId: Some(request.participantId),
-                onHookTimeout: Some(onHookTimeout),
             })
             .await?;
         logMessageTiming(
@@ -1410,6 +1410,9 @@ impl MessageProcessingDelegate {
             observer.snapshot(aiMessage.timestamp, &aiMessage.parts);
         }
         aiMessage.contentStream = None;
+        if let Some(presentation) = aiMessage.pluginExtensions.get_mut(PRESENTATION_EXTENSION) {
+            presentation["pending"] = serde_json::Value::Bool(false);
+        }
         aiMessage.completedAt = messageTimingNow().startedAtMs as i64;
         Some(aiMessage)
     }
@@ -1981,6 +1984,41 @@ impl MessageProcessingDelegate {
         let workerChatHistoryDelegate =
             Arc::new(Mutex::new(request.chatHistoryDelegate.clone_for_core()));
         let workerMessageProcessingDelegate = Arc::new(Mutex::new(self.clone_for_core()));
+        let presentationSession = if workerTurnOptions.persistTurn {
+            let activeDelegate = workerMessageProcessingDelegate.clone();
+            let activeChatId = workerChatId.clone();
+            let publishDelegate = workerMessageProcessingDelegate.clone();
+            let publishHistory = workerChatHistoryDelegate.clone();
+            let publishChatId = workerChatId.clone();
+            match ToolPkgChatResponseHookBridge::start(
+                workerChatId.clone(), workerAiMessage.clone(),
+                Arc::new(move || activeDelegate.lock().expect("presentation delegate mutex poisoned").isCurrentChatTurn(&activeChatId, workerTurnId)),
+                Arc::new(move |message| {
+                    let delegate = publishDelegate.lock().expect("presentation delegate mutex poisoned");
+                    if !delegate.isCurrentChatTurn(&publishChatId, workerTurnId) { return Ok(()); }
+                    publishHistory.lock().expect("presentation history mutex poisoned")
+                        .commitAssistantMessageSegment(publishChatId.clone(), message.clone(), None)?;
+                    delegate.withExistingRuntime(Some(publishChatId.clone()), |runtime| {
+                        runtime.activeStreamingAiMessage = Some(message);
+                    });
+                    Ok(())
+                }),
+            ).await {
+                Ok(session) => session,
+                Err(message) => {
+                    sharedResponseStream.close();
+                    self.cleanupRuntimeAfterTurn(chatId.clone(), turnId);
+                    self.finishChatExecutionForTurn(chatId.clone(), turnId, InputProcessingState::Error { message: message.clone() });
+                    return Err(operit_providers::chat::llmprovider::AIService::AiServiceError::RequestFailed(message));
+                }
+            }
+        } else { None };
+        let presentationSession = Arc::new(Mutex::new(presentationSession));
+        aiMessage = workerAiMessage.lock().expect("presentation message mutex poisoned").clone();
+        self.withExistingRuntime(Some(chatId.clone()), |runtime| {
+            runtime.activeStreamingAiMessage = Some(aiMessage.clone());
+        });
+        let completionPresentationSession = presentationSession.clone();
         let completionContextWorkspacePath = request.workspacePath.clone();
         let completionContextPromptFunctionType = request.promptFunctionType.clone();
         let completionContextConfiguration = configuration.clone();
@@ -2090,9 +2128,15 @@ impl MessageProcessingDelegate {
                                                 tracker.savepoint(&event.id);
                                             }
                                             operit_util::stream::RevisableTextStream::TextStreamEventType::Rollback => {
-                                                tracker
-                                                    .rollback(&event.id)
-                                                    .expect("response rollback must reference an active savepoint");
+                                                if tracker.rollback(&event.id).is_none() {
+                                                    AppLogger::w(
+                                                        "CoreStreamTrace",
+                                                        &format!(
+                                                            "response rollback savepoint missing; keeping current content id={}",
+                                                            event.id
+                                                        ),
+                                                    );
+                                                }
                                             }
                                         }
                                         if event.event_type
@@ -2107,6 +2151,7 @@ impl MessageProcessingDelegate {
                                                     Err(error) => observer.failed(error),
                                                 }
                                             }
+                                            if let Some(session) = presentationSession.lock().expect("presentation session mutex poisoned").as_ref() { session.snapshot(&snapshot); }
                                             persistStreamingSnapshot(&snapshot);
                                         }
                                         return;
@@ -2142,6 +2187,7 @@ impl MessageProcessingDelegate {
                                         Err(error) => observer.failed(error),
                                     }
                                 }
+                                if let Some(session) = presentationSession.lock().expect("presentation session mutex poisoned").as_ref() { session.snapshot(&snapshot); }
                                 persistStreamingSnapshot(&snapshot);
                             })
                             .await;
@@ -2168,6 +2214,13 @@ impl MessageProcessingDelegate {
                             .expect("revision tracker mutex poisoned")
                             .current_content()
                             .to_owned();
+                        let presentation = completionPresentationSession.lock().expect("presentation session mutex poisoned").take();
+                        let presentationError = match presentation {
+                            Some(session) => session.finish(finalContent.clone()).await.err(),
+                            None => None,
+                        };
+                        if !completionMessageProcessingDelegate.lock().expect("worker message processing delegate mutex poisoned")
+                            .isCurrentChatTurn(&completionChatId, completionTurnId) { return; }
                         let mut workerService = workerService;
                         let tokenSnapshot = workerService.getLastTurnTokenSnapshot().unwrap_or(
                             operit_providers::chat::EnhancedAIService::TurnTokenSnapshot {
@@ -2199,6 +2252,9 @@ impl MessageProcessingDelegate {
                                 observer.snapshot(workerAiMessage.timestamp, &parts);
                             }
                             workerAiMessage.parts = parts;
+                            if let Some(presentation) = workerAiMessage.pluginExtensions.get_mut(PRESENTATION_EXTENSION) {
+                                presentation["pending"] = serde_json::Value::Bool(false);
+                            }
                             MessageProcessingDelegate::withTurnMetrics(
                                 ChatMessage {
                                     completedAt: completedElapsed,
@@ -2212,7 +2268,7 @@ impl MessageProcessingDelegate {
                                 completedElapsed,
                             )
                         };
-                        if let Some(error) = completionResponseStream.terminal_failure() {
+                        if let Some(mut error) = completionResponseStream.terminal_failure().or(presentationError) {
                             ChainLogger::error(
                                 RECEIVE_CHAIN,
                                 "receive.stream.failed",
@@ -2233,22 +2289,23 @@ impl MessageProcessingDelegate {
                                     contentStream: None,
                                     ..finalMessage
                                 };
-                                completionChatHistoryDelegate
+                                let committed = completionChatHistoryDelegate
                                     .lock()
                                     .expect("worker chat history mutex poisoned")
-                                    .addMessageToChat(
-                                        failedMessage.clone(),
-                                        Some(completionChatId.clone()),
+                                    .commitAssistantMessageSegment(
+                                        completionChatId.clone(), failedMessage.clone(), None,
                                     );
-                                completionMessageProcessingDelegate
-                                    .lock()
-                                    .expect("worker message processing delegate mutex poisoned")
-                                    .recordCommittedAssistant(
-                                        &completionChatId,
-                                        completionTurnId,
-                                        &failedMessage,
-                                        0,
-                                    );
+                                match committed {
+                                    Ok(_) => completionMessageProcessingDelegate
+                                        .lock()
+                                        .expect("worker message processing delegate mutex poisoned")
+                                        .recordCommittedAssistant(
+                                            &completionChatId, completionTurnId, &failedMessage, 0,
+                                        ),
+                                    Err(commitError) => {
+                                        error = format!("{error}; failed to persist assistant response: {commitError}");
+                                    }
+                                }
                             }
                             let mut delegate = completionMessageProcessingDelegate
                                 .lock()
@@ -2681,7 +2738,7 @@ impl MessageProcessingDelegate {
             publishOwnerAppNotification(RuntimeHostInteractionAppNotificationPayload {
                 notificationType: "ai_message_completed".to_string(),
                 title: "Operit".to_string(),
-                message: aiMessageNotificationPreview(&aiMessage.displayText()),
+                message: aiMessageNotificationPreview(&aiMessage.parts),
                 chatId: Some(chatId.clone()),
                 messageTimestamp: Some(aiMessage.timestamp),
             });
@@ -2718,7 +2775,7 @@ impl MessageProcessingDelegate {
                 if let Some(assistant) = assistant {
                     publishOwnerAppNotification(RuntimeHostInteractionAppNotificationPayload {
                         notificationType: "ai_message_completed".to_string(), title: "Operit".to_string(),
-                        message: aiMessageNotificationPreview(&assistant.displayText()), chatId: Some(chatId.to_string()),
+                        message: aiMessageNotificationPreview(&assistant.parts), chatId: Some(chatId.to_string()),
                         messageTimestamp: Some(assistant.timestamp),
                     });
                 }
@@ -2740,11 +2797,22 @@ impl MessageProcessingDelegate {
     }
 }
 
-/// Builds a compact single-line preview for an AI reply notification.
-fn aiMessageNotificationPreview(content: &str) -> String {
+/// Builds a compact reply preview from Markdown parts without provider metadata.
+fn aiMessageNotificationPreview(parts: &[MessagePart]) -> String {
     const MAX_NOTIFICATION_PREVIEW_CHARACTERS: usize = 240;
-    content
-        .split_whitespace()
+    let content: String = MessagePartCodec::orderedParts(parts)
+        .into_iter()
+        .filter(|part| part.kind == MessagePartKind::Markdown)
+        .map(|part| part.content.as_str())
+        .collect();
+    let mut body = String::with_capacity(content.len());
+    let mut cursor = 0;
+    for (start, end) in tag_ranges(&content, "meta") {
+        body.push_str(&content[cursor..start]);
+        cursor = end;
+    }
+    body.push_str(&content[cursor..]);
+    body.split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
         .chars()
@@ -2755,12 +2823,14 @@ fn aiMessageNotificationPreview(content: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        collectToolPkgChatRuntimeStatistics, ChatExecutionState, ChatSummaryTask, ChatSummaryTasks,
-        ChatTurnReceiptState, MessageProcessingCallbacks,
+        aiMessageNotificationPreview, collectToolPkgChatRuntimeStatistics, ChatExecutionState,
+        ChatSummaryTask, ChatSummaryTasks, ChatTurnReceiptState, MessageProcessingCallbacks,
     };
     use futures_util::future::{ready, AbortHandle};
     use futures_util::FutureExt;
     use operit_model::InputProcessingState::InputProcessingState;
+    use operit_model::MessagePart::MessagePart;
+    use operit_model::MessagePartCodec::MessagePartCodec;
     use operit_plugin_sdk::js_sdk::results::{
         ChatCommittedMessage, JsOptional, MessageSendOutcome, MessageSendResultData,
         MessageSendStatus,
@@ -2773,6 +2843,138 @@ mod tests {
         Arc,
     };
     use tokio::sync::oneshot;
+
+    /// Closing an observer ends its transform while production and a fresh live subscriber continue.
+    #[tokio::test]
+    async fn disposed_response_observer_stops_without_cancelling_generation() {
+        use operit_link::{
+            CoreEventKind, CoreEventStream, CoreRequestId, CoreValue, CoreWatchRequest,
+        };
+        use operit_providers::chat::llmprovider::AIService::SharedAiResponseStream;
+        use operit_util::stream::HotStream::mutable_shared_stream;
+
+        let producer = SharedAiResponseStream::new_ordered(
+            mutable_shared_stream(usize::MAX),
+            mutable_shared_stream(usize::MAX),
+        );
+        let request = CoreWatchRequest {
+            requestId: CoreRequestId("observer".to_string()),
+            target: "$core.stream.open".to_string(),
+            propertyName: "openCoreStream".to_string(),
+            args: CoreValue::emptyMap(),
+        };
+        let (sender, receiver) = CoreEventStream::channel();
+        let first = super::collectCoreResponseStream(
+            producer.clone(),
+            "response".to_string(),
+            request.clone(),
+            sender,
+        );
+        tokio::pin!(first);
+        assert!(first.as_mut().now_or_never().is_none());
+        producer.emit_chunk("before ".to_string());
+        assert!(first.as_mut().now_or_never().is_none());
+        drop(receiver);
+        assert!(first.as_mut().now_or_never().is_some());
+
+        producer.emit_chunk("after".to_string());
+        let (sender, mut receiver) = CoreEventStream::channel();
+        let second = super::collectCoreResponseStream(
+            producer.clone(),
+            "response".to_string(),
+            request,
+            sender,
+        );
+        tokio::pin!(second);
+        assert!(second.as_mut().now_or_never().is_none());
+        producer.emit_chunk(" live".to_string());
+        assert!(second.as_mut().now_or_never().is_none());
+        producer.close();
+        second.await;
+        let mut text = String::new();
+        let mut completed = false;
+        while let Some(event) = receiver.recv().await {
+            completed |= event.kind == CoreEventKind::Completed;
+            if let CoreValue::Map(fields) = event.value {
+                if fields.get("type") == Some(&CoreValue::String("chunk".to_string())) {
+                    if let Some(CoreValue::String(content)) = fields.get("value") {
+                        text.push_str(content);
+                    }
+                }
+            }
+        }
+        assert_eq!(text, "before after live");
+        assert!(completed);
+    }
+
+    /// Removes long provider metadata before applying the notification length limit.
+    #[test]
+    fn notification_preview_excludes_provider_metadata_before_truncation() {
+        let content = format!(
+            "<meta provider=\"openai:responses_reasoning\">{}</meta>\n回复正文",
+            "eyJ".repeat(200)
+        );
+        let parts = MessagePartCodec::parseAssistantMarkup(&content).unwrap();
+        assert_eq!(aiMessageNotificationPreview(&parts), "回复正文");
+    }
+
+    /// Omits thinking, tool payloads, and status parts while preserving reply order.
+    #[test]
+    fn notification_preview_uses_only_ordered_reply_parts() {
+        let mut parts = MessagePartCodec::parseAssistantMarkup(
+            "<think>private reasoning</think>第一段\n\n\
+             <tool name=\"run\"><param name=\"command\">secret</param></tool>\
+             <tool_result name=\"run\" status=\"success\"><content>tool payload</content></tool_result>\
+             <status type=\"complete\">completed</status>第二段",
+        )
+        .unwrap();
+        parts.reverse();
+        assert_eq!(aiMessageNotificationPreview(&parts), "第一段 第二段");
+    }
+
+    /// Removes every metadata provider without deleting surrounding reply text.
+    #[test]
+    fn notification_preview_removes_multiple_metadata_blocks() {
+        let parts = vec![MessagePart::markdown(
+            "part-0".to_string(),
+            0,
+            "前<meta provider=\"openai:responses_reasoning\">encoded</meta>中\
+             <META provider='gemini:thought_signature'>signature</META>\
+             <meta provider=\"openai:responses_output_item\">payload</meta>后"
+                .to_string(),
+        )];
+        assert_eq!(aiMessageNotificationPreview(&parts), "前中后");
+    }
+
+    /// Prevents metadata-only and unfinished metadata replies from exposing payloads.
+    #[test]
+    fn notification_preview_hides_metadata_without_a_reply_body() {
+        for content in [
+            "<meta provider=\"openai:responses_reasoning\">encoded</meta>",
+            "<meta provider=\"openai:responses_reasoning\">encoded",
+        ] {
+            let parts = vec![MessagePart::markdown(
+                "part-0".to_string(),
+                0,
+                content.to_string(),
+            )];
+            assert_eq!(aiMessageNotificationPreview(&parts), "");
+        }
+    }
+
+    /// Normalizes whitespace and counts Unicode characters when limiting reply text.
+    #[test]
+    fn notification_preview_limits_visible_unicode_characters() {
+        let parts = vec![MessagePart::markdown(
+            "part-0".to_string(),
+            0,
+            format!("\n\t你好  世界\n{}", "🙂".repeat(240)),
+        )];
+        assert_eq!(
+            aiMessageNotificationPreview(&parts),
+            format!("你好 世界 {}", "🙂".repeat(234)),
+        );
+    }
 
     /// Creates a terminal result retaining the committed user identity across a continuation.
     fn summaryContinuationResult(

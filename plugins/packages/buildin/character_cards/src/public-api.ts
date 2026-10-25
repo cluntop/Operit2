@@ -82,6 +82,15 @@ export async function memoryQueryApi(event: ToolPkg.PublicApiEvent<MemoryQueryRe
   }, { chatId: null, participantId: input.participantId, callerName: event.callerPackage });
 }
 
+/** Executes one built-in recall query through the same participant-bound snapshot state. */
+export async function memoryRecallQuery(participantId: string, query: string, limit: number, snapshotId: string | null): Promise<MemoryQueryResult> {
+  return memoryQueries.execute("query_memory", {
+    query,
+    limit,
+    ...(snapshotId === null ? {} : { snapshot_id: snapshotId }),
+  }, { chatId: null, participantId, callerName: null });
+}
+
 /** Executes memory.chat.list through the sole private database-backed service. */
 export async function memoryChatListApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.chat.list">>): Promise<DomainOutput<"memory.chat.list">> {
   return dispatchDomain("memory.chat.list", parseDomainPayload("memory.chat.list", event.payload));
@@ -90,6 +99,11 @@ export async function memoryChatListApi(event: ToolPkg.PublicApiEvent<DomainInpu
 /** Executes memory.chat.update through the sole private database-backed service. */
 export async function memoryChatUpdateApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.chat.update">>): Promise<DomainOutput<"memory.chat.update">> {
   return dispatchDomain("memory.chat.update", parseDomainPayload("memory.chat.update", event.payload));
+}
+
+/** Executes memory.chat.pruneMissing through the sole private database-backed service. */
+export async function memoryChatPruneMissingApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.chat.pruneMissing">>): Promise<DomainOutput<"memory.chat.pruneMissing">> {
+  return dispatchDomain("memory.chat.pruneMissing", parseDomainPayload("memory.chat.pruneMissing", event.payload));
 }
 
 /** Executes memory.categorize through the sole private database-backed service. */
@@ -107,6 +121,16 @@ export async function memoryRebuildProgressApi(event: ToolPkg.PublicApiEvent<Dom
   return dispatchDomain("memory.rebuild.progress", parseDomainPayload("memory.rebuild.progress", event.payload));
 }
 
+/** Executes memory.candidates.retryFailed through the sole private database-backed service. */
+export async function memoryCandidatesRetryFailedApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.candidates.retryFailed">>): Promise<DomainOutput<"memory.candidates.retryFailed">> {
+  return dispatchDomain("memory.candidates.retryFailed", parseDomainPayload("memory.candidates.retryFailed", event.payload));
+}
+
+/** Executes memory.candidates.clearFailed through the sole private database-backed service. */
+export async function memoryCandidatesClearFailedApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.candidates.clearFailed">>): Promise<DomainOutput<"memory.candidates.clearFailed">> {
+  return dispatchDomain("memory.candidates.clearFailed", parseDomainPayload("memory.candidates.clearFailed", event.payload));
+}
+
 /** Executes memory.rebuild.cancel through the sole private database-backed service. */
 export async function memoryRebuildCancelApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.rebuild.cancel">>): Promise<DomainOutput<"memory.rebuild.cancel">> {
   return dispatchDomain("memory.rebuild.cancel", parseDomainPayload("memory.rebuild.cancel", event.payload));
@@ -120,6 +144,11 @@ export async function memoryEmbeddingsRebuildApi(event: ToolPkg.PublicApiEvent<D
 /** Executes memory.candidate.enqueue through the sole private database-backed service. */
 export async function memoryCandidateEnqueueApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.candidate.enqueue">>): Promise<DomainOutput<"memory.candidate.enqueue">> {
   return dispatchDomain("memory.candidate.enqueue", parseDomainPayload("memory.candidate.enqueue", event.payload));
+}
+
+/** Queries document chunks through the same persisted repository and scoring implementation. */
+export async function memoryChunksApi(event: ToolPkg.PublicApiEvent<DomainInput<"memory.chunks">>): Promise<DomainOutput<"memory.chunks">> {
+  return dispatchDomain("memory.chunks", parseDomainPayload("memory.chunks", event.payload));
 }
 
 /** Executes full-filter search through the sole file service and its real embedding cache. */
@@ -439,13 +468,17 @@ export function registerDomainApis(): void {
   ToolPkg.registerApi({ name: "chat.configuration.draft.abort", function: chatConfigurationDraftAbortApi });
   ToolPkg.registerApi<MemoryQueryRequest, MemoryQueryResult>({ name: "memory.query", function: memoryQueryApi });
   ToolPkg.registerApi<DomainInput<"memory.searchWithOptions">, DomainOutput<"memory.searchWithOptions">>({ name: "memory.searchWithOptions", function: memorySearchWithOptionsApi });
+  ToolPkg.registerApi<DomainInput<"memory.chunks">, DomainOutput<"memory.chunks">>({ name: "memory.chunks", function: memoryChunksApi });
   ToolPkg.registerApi<DomainInput<"memory.candidate.enqueue">, DomainOutput<"memory.candidate.enqueue">>({ name: "memory.candidate.enqueue", function: memoryCandidateEnqueueApi });
   ToolPkg.registerApi<DomainInput<"memory.embeddings.rebuild">, DomainOutput<"memory.embeddings.rebuild">>({ name: "memory.embeddings.rebuild", function: memoryEmbeddingsRebuildApi });
   ToolPkg.registerApi<DomainInput<"memory.rebuild.cancel">, DomainOutput<"memory.rebuild.cancel">>({ name: "memory.rebuild.cancel", function: memoryRebuildCancelApi });
   ToolPkg.registerApi<DomainInput<"memory.rebuild.progress">, DomainOutput<"memory.rebuild.progress">>({ name: "memory.rebuild.progress", function: memoryRebuildProgressApi });
+  ToolPkg.registerApi<DomainInput<"memory.candidates.retryFailed">, DomainOutput<"memory.candidates.retryFailed">>({ name: "memory.candidates.retryFailed", function: memoryCandidatesRetryFailedApi });
+  ToolPkg.registerApi<DomainInput<"memory.candidates.clearFailed">, DomainOutput<"memory.candidates.clearFailed">>({ name: "memory.candidates.clearFailed", function: memoryCandidatesClearFailedApi });
   ToolPkg.registerApi<DomainInput<"memory.rebuild.start">, DomainOutput<"memory.rebuild.start">>({ name: "memory.rebuild.start", function: memoryRebuildStartApi });
   ToolPkg.registerApi<DomainInput<"memory.categorize">, DomainOutput<"memory.categorize">>({ name: "memory.categorize", function: memoryCategorizeApi });
   ToolPkg.registerApi<DomainInput<"memory.chat.update">, DomainOutput<"memory.chat.update">>({ name: "memory.chat.update", function: memoryChatUpdateApi });
+  ToolPkg.registerApi<DomainInput<"memory.chat.pruneMissing">, DomainOutput<"memory.chat.pruneMissing">>({ name: "memory.chat.pruneMissing", function: memoryChatPruneMissingApi });
   ToolPkg.registerApi<DomainInput<"memory.chat.list">, DomainOutput<"memory.chat.list">>({ name: "memory.chat.list", function: memoryChatListApi });
   registerChatConfigurationApis();
   ToolPkg.registerApi<DomainInput<"snapshot">, DomainOutput<"snapshot">>({ name: "snapshot", function: snapshotApi });

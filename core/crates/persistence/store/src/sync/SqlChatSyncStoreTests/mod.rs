@@ -57,6 +57,12 @@ impl TestRuntimeHost {
 }
 
 impl RuntimeStorageHost for TestRuntimeHost {
+    /// Flushes the existing test file through its backing filesystem.
+    fn flushFile(&self, path: &str) -> operit_host_api::HostResult<()> {
+        std::fs::OpenOptions::new().write(true).open(self.resolve(path)?)?.sync_all()?;
+        Ok(())
+    }
+
     fn runtimeRootDir(&self) -> Option<PathBuf> {
         Some(self.root.clone())
     }
@@ -82,6 +88,12 @@ impl RuntimeStorageHost for TestRuntimeHost {
             .ok_or_else(|| HostError::new("runtime storage byte range overflows usize"))?
             .min(content.len());
         Ok(content[start..end].to_vec())
+    }
+
+    /// Uses the production atomic writer for filesystem-backed persistence tests.
+    fn writeBytesAtomically(&self, path: &str, content: &[u8]) -> HostResult<()> {
+        operit_host_native_storage::NativeRuntimeStorageHost::new(self.root.join("runtime"), self.root.join("workspaces"))
+            .writeBytesAtomically(path, content)
     }
 
     fn writeBytes(&self, path: &str, content: &[u8]) -> HostResult<()> {

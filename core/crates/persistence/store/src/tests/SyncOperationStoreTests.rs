@@ -25,6 +25,14 @@ impl MemoryStorageHost {
 }
 
 impl RuntimeStorageHost for MemoryStorageHost {
+    /// Confirms synchronous in-memory publication without copying or rewriting bytes.
+    fn flushFile(&self, path: &str) -> operit_host_api::HostResult<()> {
+        if !self.exists(path)? {
+            return Err(operit_host_api::HostError::new("runtime storage entry not found"));
+        }
+        Ok(())
+    }
+
     fn runtimeRootDir(&self) -> Option<std::path::PathBuf> {
         None
     }
@@ -65,6 +73,12 @@ impl RuntimeStorageHost for MemoryStorageHost {
             .ok_or_else(|| HostError::new("runtime storage byte range overflows usize"))?
             .min(content.len());
         Ok(content[start..end].to_vec())
+    }
+
+    /// Atomically replaces one in-memory file.
+
+    fn writeBytesAtomically(&self, path: &str, content: &[u8]) -> operit_host_api::HostResult<()> {
+        self.writeBytes(path, content)
     }
 
     fn writeBytes(&self, path: &str, content: &[u8]) -> operit_host_api::HostResult<()> {
@@ -1112,7 +1126,7 @@ fn compact_preferences_preserves_other_origins_and_edits_after_entry_replacement
 /// Removes legacy preference history once a later native migration snapshot
 /// covers the same keys, keeping paged synchronization applicable to migrated peers.
 #[test]
-fn compact_preferences_drops_legacy_history_covered_by_native_migration() {
+fn compact_preferences_retains_originals_across_storage_migrations() {
     let path = "runtime/config/preferences/user_preferences.preferences.json";
     let mut legacy = preferenceOperation("device-a", 1, json!([]));
     legacy.payload = json!({
@@ -1142,14 +1156,14 @@ fn compact_preferences_drops_legacy_history_covered_by_native_migration() {
         schemaVersion: 3,
     };
 
-    let compacted = compactSyncOperations(vec![legacy, native.clone()]);
-    assert_eq!(compacted, vec![native]);
+    let original = vec![legacy, native];
+    assert_eq!(compactSyncOperations(original.clone()), original);
 }
 
 /// Does not treat an ordinary native edit as an old migration boundary when
 /// another legacy key still needs to be covered by the later full snapshot.
 #[test]
-fn compact_preferences_waits_for_unmarked_full_migration_snapshot() {
+fn compaction_does_not_infer_coverage_from_matching_key_sets() {
     let path = "runtime/config/preferences/user_preferences.preferences.json";
     let mut legacyTheme = preferenceOperation("device-a", 1, json!([]));
     legacyTheme.payload = json!({
@@ -1190,13 +1204,8 @@ fn compact_preferences_waits_for_unmarked_full_migration_snapshot() {
         ],
     });
 
-    let compacted = compactSyncOperations(vec![
-        legacyTheme,
-        legacyFont,
-        ordinaryNativeEdit.clone(),
-        migration.clone(),
-    ]);
-    assert_eq!(compacted, vec![ordinaryNativeEdit, migration]);
+    let original = vec![legacyTheme, legacyFont, ordinaryNativeEdit, migration];
+    assert_eq!(compactSyncOperations(original.clone()), original);
 }
 
 
@@ -1648,5 +1657,44 @@ fn retained_preferences_advance_past_retired_history_with_count_and_byte_limits(
             assert!(page.is_empty());
             assert!(!receipt.containsSequence("device-a", 1));
         }
+    }
+}
+
+/// Completed SQL-owned operations retain content verification independently of their pending payloads.
+#[test]
+fn completed_receipt_rejects_changed_original_payload_after_restart() {
+    let host = Arc::new(MemoryStorageHost::default());
+    let store = SyncOperationStore::new(host.clone(), "receipt-content");
+    let original = operation(1, "message", "id", "upsert", SyncOperationSemantics::Transaction, json!({"content":"original"}));
+    store.receiveOperations(&[original.clone()]).unwrap();
+    store.completeOperations(&[original.clone()]).unwrap();
+    let restarted = SyncOperationStore::new(Arc::new((*host).clone()), "receipt-content");
+    restarted.receiveOperations(&[original.clone()]).unwrap();
+    let mut changed = original; changed.payload = json!({"content":"changed"});
+    assert!(restarted.receiveOperations(&[changed]).is_err());
+    assert!(restarted.pendingOperations().unwrap().is_empty());
+}
+
+/// A retry after an interrupted append must remain a separate readable journal record.
+#[test]
+fn intact_operations_survive_retry_after_partial_journal_tail() {
+    for batch in [false, true] {
+        let host = Arc::new(MemoryStorageHost::default());
+        let store = SyncOperationStore::new(host.clone(), "runtime/sync");
+        let first = operation(1, "message", "one", "set", SyncOperationSemantics::Transaction, json!({"text":"one"}));
+        let second = operation(2, "message", "two", "set", SyncOperationSemantics::Transaction, json!({"text":"two"}));
+        let mut interrupted = serde_json::to_vec(&first).unwrap();
+        interrupted.extend_from_slice(b"\n{\"opId\":");
+        host.writeBytes(&store.operationsPath("device-a"), &interrupted).unwrap();
+        // First record spans an invalid tail in the offset index, but its identity remains readable.
+        store.appendOperations(std::slice::from_ref(&first)).unwrap();
+        if batch {
+            store.appendOperations(std::slice::from_ref(&second)).unwrap();
+        } else {
+            store.appendUnobservedOperation(&second).unwrap();
+        }
+        // A new Host instance rebuilds all caches from the persisted bytes.
+        let restarted = SyncOperationStore::new(Arc::new((*host).clone()), "runtime/sync");
+        assert_eq!(restarted.operationsSince(&SyncClock::empty(), &[], 100).unwrap(), vec![first, second]);
     }
 }
