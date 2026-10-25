@@ -4312,4 +4312,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localModelsSearchCatalog => 'Search by name or inference engine';
+
+  @override
+  String get deviceSpaceSyncPeer => 'a space device';
+
+  @override
+  String deviceSpaceSyncActive(String device) {
+    return 'Syncing with $device';
+  }
+
+  @override
+  String deviceSpaceSyncCompleted(String device) {
+    return 'Synced with $device';
+  }
+
+  @override
+  String get deviceSpaceSyncChecking => 'Checking for changes';
+
+  @override
+  String get deviceSpaceSyncRecords => 'Exchanging records';
+
+  @override
+  String get deviceSpaceSyncFiles => 'Transferring and verifying files';
+
+  @override
+  String get deviceSpaceSyncRetrying =>
+      'Sync interrupted. Retrying automatically.';
+
+  @override
+  String get deviceSpaceSyncPending =>
+      'Some data is still pending. Retrying automatically.';
+
+  @override
+  String deviceSpaceSyncCurrentFile(String done, String total) {
+    return 'Current file: $done / $total';
+  }
+
+  @override
+  String deviceSpaceSyncTransferred(int count, String bytes) {
+    return '$count records exchanged · $bytes transferred';
+  }
+
+  @override
+  String get deviceSpaceSyncBackground =>
+      'You can keep using the app while syncing continues.';
+
+  @override
+  String get runtimeActivityTitle => 'Background tasks';
+
+  @override
+  String get runtimeActivitySyncing => 'Syncing';
+
+  @override
+  String get runtimeActivitySyncCompleted => 'Sync complete';
+
+  @override
+  String get runtimeActivityWaiting => 'Waiting to retry';
+
+  @override
+  String get runtimeActivityExpand => 'Show background tasks';
+
+  @override
+  String get runtimeActivityLoadingPackages => 'Loading extensions';
 }

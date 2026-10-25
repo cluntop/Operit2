@@ -281,6 +281,13 @@ async fn idle_cycles_probe_clocks_without_repeating_full_exchanges() {
         "idle cycles keep probing the remote clock"
     );
 
+    // Reconstructing a facade must not construct a second worker or discard
+    // the settled gate. Frequent small syncs stay silent at the proxy boundary.
+    let reopened = idleObserver(&routers[1]);
+    reopened.synchronizeOnce().await.unwrap();
+    assert_eq!(fullPassMarkers(&peers[1]), markersAfterFirstPass);
+    assert!(access[1].spaceSyncProgressFlow().value().is_empty());
+
     // A remote authority change moves the remote clock: the next cycle runs a
     // full pass and the operation is applied locally.
     let operationsBefore = routers[1]
@@ -310,6 +317,23 @@ async fn idle_cycles_probe_clocks_without_repeating_full_exchanges() {
     let markersAfterChangePass = fullPassMarkers(&peers[1]);
     observer.synchronizeOnce().await.unwrap();
     assert_eq!(fullPassMarkers(&peers[1]), markersAfterChangePass);
+
+    // Delaying a small incremental exchange does not make it substantial.
+    // Both the delay and a real backlog are required for visible progress.
+    let reopenedFacade = RuntimeRemoteLinkService::newWithRouter(
+        (*routers[1].localCore).clone(), routers[1].clone());
+    let progress = reopenedFacade.spaceSyncProgressFlow();
+    access[0].updateDeviceSpacePolicy("sync.large.incremental".into(), "v1".into()).unwrap();
+    let (arrived, resume) = peers[1].pauseResponse("syncApplyOperations");
+    let (result, ()) = tokio::join!(observer.synchronizeOnce(), async {
+        arrived.await.unwrap();
+        assert!(progress.value().is_empty(), "a new incremental exchange starts silently");
+        tokio::time::sleep(Duration::from_millis(3_100)).await;
+        assert!(progress.value().is_empty(), "a slow small exchange stays silent");
+        resume.send(()).unwrap();
+    });
+    result.unwrap();
+    assert!(progress.value().is_empty(), "small completion stays silent too");
 }
 
 /// Verifies a failed pass arms the exponential backoff: the immediate retry is
