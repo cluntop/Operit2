@@ -196,19 +196,28 @@ jobs:
             }
           }
 
-      - name: Install Ninja manually
+      - name: Install GN and Ninja for V8 build
         shell: pwsh
         run: |
-          $ninjaVersion = "1.12.1"
-          $ninjaUrl = "https://github.com/ninja-build/ninja/releases/download/v${ninjaVersion}/ninja-win.zip"
-          $ninjaDir = "C:\ninja"
-          New-Item -ItemType Directory -Force -Path $ninjaDir | Out-Null
-          Invoke-WebRequest -Uri $ninjaUrl -OutFile "$ninjaDir\ninja-win.zip"
-          Expand-Archive -Path "$ninjaDir\ninja-win.zip" -DestinationPath $ninjaDir -Force
-          $ninjaExe = Join-Path $ninjaDir "ninja.exe"
-          if (-not (Test-Path $ninjaExe)) { throw "Ninja not found at $ninjaExe" }
-          & $ninjaExe --version
-          echo "$ninjaDir" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          $toolsDir = "C:\v8-tools"
+          New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
+      
+          # 安装 Ninja
+          $ninjaUrl = "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip"
+          Invoke-WebRequest -Uri $ninjaUrl -OutFile "$toolsDir\ninja.zip"
+          Expand-Archive -Path "$toolsDir\ninja.zip" -DestinationPath $toolsDir -Force
+      
+          # 安装 GN (从 Chromium 官方镜像获取)
+          $gnUrl = "https://chrome-infra-packages.appspot.com/dl/gn/gn/windows-amd64/+/latest"
+          Invoke-WebRequest -Uri $gnUrl -OutFile "$toolsDir\gn.zip"
+          Expand-Archive -Path "$toolsDir\gn.zip" -DestinationPath $toolsDir -Force
+      
+          # 验证工具
+          & "$toolsDir\ninja.exe" --version
+          & "$toolsDir\gn.exe" --version
+      
+          # 将工具目录加入 PATH
+          $toolsDir | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Set Ninja env var for V8 build
         shell: pwsh
