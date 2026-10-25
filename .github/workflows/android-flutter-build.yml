@@ -302,6 +302,17 @@ jobs:
               $_.Context.PostContext
             }
 
+      - name: Remove Aliyun Maven Mirror in CI
+        if: ${{ env.CI == 'true' }}
+        shell: pwsh
+        run: |
+          $settingsFile = "apps/flutter/app/android/settings.gradle.kts"
+          if (Test-Path $settingsFile) {
+            (Get-Content $settingsFile) -replace 'maven\s*\{\s*url\s*=\s*uri\("https://maven\.aliyun\.com/repository/google"\)\s*\}', '' `
+                                       -replace 'maven\s*\{\s*url\s*=\s*uri\("https://maven\.aliyun\.com/repository/public"\)\s*\}', '' |
+              Set-Content $settingsFile -Encoding utf8
+          }
+
       - name: Build and package Android app
         shell: pwsh
         run: |
