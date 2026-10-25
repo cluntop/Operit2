@@ -196,6 +196,26 @@ jobs:
             }
           }
 
+      - name: Install Ninja manually
+        shell: pwsh
+        run: |
+          $ninjaVersion = "1.12.1"
+          $ninjaUrl = "https://github.com/ninja-build/ninja/releases/download/v${ninjaVersion}/ninja-win.zip"
+          $ninjaDir = "C:\ninja"
+          New-Item -ItemType Directory -Force -Path $ninjaDir | Out-Null
+          Invoke-WebRequest -Uri $ninjaUrl -OutFile "$ninjaDir\ninja-win.zip"
+          Expand-Archive -Path "$ninjaDir\ninja-win.zip" -DestinationPath $ninjaDir -Force
+          $ninjaExe = Join-Path $ninjaDir "ninja.exe"
+          if (-not (Test-Path $ninjaExe)) { throw "Ninja not found at $ninjaExe" }
+          & $ninjaExe --version
+          echo "$ninjaDir" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Set Ninja env var for V8 build
+        shell: pwsh
+        run: |
+          $ninjaExe = "C:\ninja\ninja.exe"
+          "NINJA=$ninjaExe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
       - name: Prepare Android bindgen libclang
         shell: pwsh
         run: |
