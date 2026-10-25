@@ -30,10 +30,10 @@ jobs:
       - name: Fetch Android runtime sources
         shell: pwsh
         run: pwsh -NoProfile -File tools/android-runtime/fetch_sources.ps1
-  
+
       - name: Fetch Android NDK
         run: bash tools/android-runtime/fetch_ndk_wsl.sh
-  
+
       - name: Build Android terminal runtime
         run: |
           export ANDROID_NDK_HOME="$HOME/.cache/operit-android-runtime/android-ndk-r29-beta4"
@@ -57,7 +57,7 @@ jobs:
           path: node24-smoke.log
           if-no-files-found: ignore
           retention-days: 1
-  
+
       - name: Upload Android terminal runtime
         uses: actions/upload-artifact@v4
         with:
@@ -81,6 +81,8 @@ jobs:
       RUSTFLAGS: -Awarnings
       RUST_TOOLCHAIN_VERSION: 1.95.0
       FVM_VERSION: 4.3.0
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
 
     steps:
       - name: Checkout
@@ -159,7 +161,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN_VERSION }}
           targets: aarch64-linux-android
-          
+
       - name: Prepare TypeScript toolchain
         shell: pwsh
         run: |
