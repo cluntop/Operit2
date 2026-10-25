@@ -3,6 +3,9 @@ name: Android Flutter Build
 on:
   workflow_dispatch:
 
+env:
+  RUSTY_V8_MIRROR: https://github.com/aidant/rusty_v8/releases/download
+
 permissions:
   contents: read
 
@@ -130,7 +133,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: "24"
+          java-version: "25"
 
       - name: Install FVM
         shell: pwsh
