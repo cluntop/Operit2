@@ -49,6 +49,14 @@ jobs:
           bash tools/runtime/smoke_alpine_node24.sh \
             "$RUNTIME_ARCHIVE" "$RUNTIME_ARCHITECTURE" "$RUNTIME_PACKAGE_LAYOUT" \
             | tee node24-smoke.log
+
+      - name: Upload Node 24 smoke log
+        uses: actions/upload-artifact@v4
+        with:
+          name: node24-smoke-${{ github.sha }}
+          path: node24-smoke.log
+          if-no-files-found: ignore
+          retention-days: 1
   
       - name: Upload Android terminal runtime
         uses: actions/upload-artifact@v4
@@ -61,7 +69,6 @@ jobs:
             apps/flutter/app/android/app/src/main/jniLibs/arm64-v8a/liboperit_proot.so
             apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin
             apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin.sha256
-            node24-smoke.log
           if-no-files-found: error
           retention-days: 1
 
