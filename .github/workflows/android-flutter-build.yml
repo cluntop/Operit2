@@ -27,6 +27,19 @@ jobs:
           gzip patch pkg-config tar unzip xz-utils \
           python3 qemu-user-static
 
+    - name: Fetch Android runtime sources
+      shell: pwsh
+      run: pwsh -NoProfile -File tools/android-runtime/fetch_sources.ps1
+
+    - name: Fetch Android NDK
+      run: bash tools/android-runtime/fetch_ndk_wsl.sh
+
+    - name: Build Android terminal runtime
+      run: |
+        export ANDROID_NDK_HOME="$HOME/.cache/operit-android-runtime/android-ndk-r29-beta4"
+        bash tools/android-runtime/build_android_tools_wsl.sh
+        bash tools/android-runtime/build_alpine_rootfs_wsl.sh
+        
     - name: Verify packaged Node 24 and SQLite
       env:
         RUNTIME_ARCHIVE: apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin
@@ -49,33 +62,6 @@ jobs:
           apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin
           apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin.sha256
           node24-smoke.log
-        if-no-files-found: error
-        retention-days: 1
-
-    - name: Fetch Android runtime sources
-      shell: pwsh
-      run: pwsh -NoProfile -File tools/android-runtime/fetch_sources.ps1
-
-    - name: Fetch Android NDK
-      run: bash tools/android-runtime/fetch_ndk_wsl.sh
-
-    - name: Build Android terminal runtime
-      run: |
-        export ANDROID_NDK_HOME="$HOME/.cache/operit-android-runtime/android-ndk-r29-beta4"
-        bash tools/android-runtime/build_android_tools_wsl.sh
-        bash tools/android-runtime/build_alpine_rootfs_wsl.sh
-
-    - name: Upload Android terminal runtime
-      uses: actions/upload-artifact@v4
-      with:
-        name: operit2-android-runtime-${{ github.sha }}
-        path: |
-          apps/flutter/app/android/app/src/main/jniLibs/arm64-v8a/libbash.so
-          apps/flutter/app/android/app/src/main/jniLibs/arm64-v8a/liboperit_busybox.so
-          apps/flutter/app/android/app/src/main/jniLibs/arm64-v8a/liboperit_loader.so
-          apps/flutter/app/android/app/src/main/jniLibs/arm64-v8a/liboperit_proot.so
-          apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin
-          apps/flutter/app/android/app/src/main/assets/android-runtime/arm64-v8a/rootfs.tar.gz.bin.sha256
         if-no-files-found: error
         retention-days: 1
 
