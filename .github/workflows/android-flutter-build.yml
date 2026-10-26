@@ -92,10 +92,10 @@ jobs:
           toolchain: 1.95.0
           targets: aarch64-linux-android
 
-      - name: Fetch Android NDK
+      - name: Android NDK
         run: bash tools/android-runtime/fetch_ndk_wsl.sh
 
-      - name: Create Python venv
+      - name: Python venv
         run: |
           python3 -m venv .venv
           .venv/bin/python --version
