@@ -77,7 +77,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
-      LIBCLANG_PATH: /usr/lib/llvm-21/lib
       PYTHONUTF8: "1"
       PYTHONIOENCODING: "utf-8"
     defaults:
@@ -128,6 +127,43 @@ jobs:
           sudo ln -sf /usr/lib/llvm-21/bin/clang++ /usr/bin/clang++
           hash -r
           clang --version | head -1
+
+      - name: Fix libclang.so.21 symlink for prepare_android_v8.py
+        run: |
+          # 找到真实的 libclang 库
+          REAL=$(readlink -f /usr/lib/llvm-21/lib/libclang.so)
+          echo "Real libclang: $REAL"
+          if [ ! -f "$REAL" ]; then
+            echo "ERROR: libclang real file not found"
+            ls -la /usr/lib/llvm-21/lib/ || true
+            ls -la /usr/lib/x86_64-linux-gnu/libclang* || true
+            exit 1
+          fi
+          # 在 llvm-21/lib 下造一个叫 libclang.so.21 的软链
+          sudo ln -sf "$REAL" /usr/lib/llvm-21/lib/libclang.so.21
+          ls -la /usr/lib/llvm-21/lib/libclang.so*
+
+      - name: Verify find_libclang will succeed
+        run: |
+          python3 - <<'EOF'
+          from pathlib import Path
+          import re
+          libraries = []
+          for directory in [Path('/usr/lib/llvm21/lib')] + sorted(Path('/usr/lib').glob('llvm*/lib'), reverse=True) + [Path('/usr/lib/x86_64-linux-gnu')]:
+              libraries += sorted(directory.glob('libclang.so*'))
+          found = False
+          for lib in libraries:
+              m = re.search(r'libclang\.so\.(\d+)', lib.name)
+              if m and int(m.group(1)) >= 21:
+                  print(f'FOUND: {lib.parent} (version {m.group(1)})')
+                  found = True
+                  break
+          if not found:
+              print('NOT FOUND — prepare_android_v8.py will still fail')
+              for lib in libraries:
+                  print(f'  scanned: {lib}')
+              raise SystemExit(1)
+          EOF
 
       - name: Build V8 for aarch64-linux-android
         env:
