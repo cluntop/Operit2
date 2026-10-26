@@ -93,6 +93,14 @@ jobs:
           toolchain: 1.95.0
           targets: aarch64-linux-android
 
+      - name: Fetch Android NDK
+        run: bash tools/android-runtime/fetch_ndk_wsl.sh
+
+      - name: Create Python venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python --version
+
       - name: Install V8 build dependencies
         run: |
           sudo apt-get update
@@ -111,27 +119,6 @@ jobs:
           # 验证
           llvm-config-21 --version
           ls /usr/lib/llvm-21/lib/libclang.so* || echo "WARNING: libclang.so not found"
-
-      - name: Force clang to LLVM 21
-        run: |
-          sudo ln -sf /usr/lib/llvm-21/bin/clang /usr/bin/clang
-          sudo ln -sf /usr/lib/llvm-21/bin/clang++ /usr/bin/clang++
-          sudo ln -sf /usr/lib/llvm-21/bin/llvm-config /usr/bin/llvm-config
-          hash -r
-          echo "=== clang ==="
-          clang --version | head -1
-          echo "=== clang++ ==="
-          clang++ --version | head -1
-          echo "=== llvm-config ==="
-          llvm-config --version
-
-      - name: Fetch Android NDK
-        run: bash tools/android-runtime/fetch_ndk_wsl.sh
-
-      - name: Create Python venv
-        run: |
-          python3 -m venv .venv
-          .venv/bin/python --version
 
       - name: Remove clang alternatives and symlink to 21
         run: |
