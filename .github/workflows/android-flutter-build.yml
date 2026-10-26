@@ -87,6 +87,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.95.0
+          targets: aarch64-linux-android
+
       - name: Install V8 build dependencies
         run: |
           sudo apt-get update
@@ -95,15 +101,6 @@ jobs:
             python3 python3-venv python3-pip \
             curl git pkg-config libssl-dev unzip \
             software-properties-common wget gnupg
-
-      - name: Set LLVM 21 as default
-        run: |
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100
-          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-21 100
-          # 验证
-          clang --version | head -1
-          llvm-config --version
 
       - name: Install LLVM 21 via llvm.sh
         run: |
@@ -115,11 +112,25 @@ jobs:
           llvm-config-21 --version
           ls /usr/lib/llvm-21/lib/libclang.so* || echo "WARNING: libclang.so not found"
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.95.0
-          targets: aarch64-linux-android
+      - name: Set LLVM 21 as default
+        run: |
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100
+          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-21 100
+          # 验证
+          clang --version | head -1
+          llvm-config --version
+
+      - name: Diagnose clang-21 actual paths
+        run: |
+          echo "=== /usr/bin/clang-21 ==="
+          ls -la /usr/bin/clang-21 || echo "not found"
+          echo "=== /usr/lib/llvm-21/bin/clang ==="
+          ls -la /usr/lib/llvm-21/bin/clang || echo "not found"
+          echo "=== /usr/lib/llvm-21/bin/llvm-config ==="
+          ls -la /usr/lib/llvm-21/bin/llvm-config || echo "not found"
+          echo "=== /usr/lib/llvm-21/bin/clang++ ==="
+          ls -la /usr/lib/llvm-21/bin/clang++ || echo "not found"
 
       - name: Fetch Android NDK
         run: bash tools/android-runtime/fetch_ndk_wsl.sh
