@@ -8,69 +8,6 @@ permissions:
 
 jobs:
 
-  build-android-v8:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install V8 build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential cmake ninja-build \
-            python3 python3-venv python3-pip \
-            curl git pkg-config libssl-dev unzip
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.95.0
-          targets: aarch64-linux-android
-
-      - name: Fetch Android NDK
-        run: bash tools/android-runtime/fetch_ndk_wsl.sh
-
-      - name: Create Python venv
-        run: |
-          python3 -m venv .venv
-          .venv/bin/python --version
-
-      - name: Build V8 for aarch64-linux-android
-        env:
-          ANDROID_NDK_HOME: ${{ github.workspace }}/.cache/operit-android-runtime/android-ndk-r29-beta4
-          PYTHONUTF8: "1"
-          PYTHONIOENCODING: "utf-8"
-        run: |
-          .venv/bin/python tools/build_scripts/prepare_android_v8.py --abi arm64-v8a
-
-      - name: Collect V8 artifacts
-        run: |
-          mkdir -p v8-artifacts
-          SRC="tools/release/work/android-v8/152.2.0/build/aarch64-linux-android/release"
-          if [ ! -d "$SRC" ]; then
-            echo "V8 build output not found at $SRC"
-            find tools/release/work/android-v8 -maxdepth 4 -type d || true
-            exit 1
-          fi
-          cp -r "$SRC"/. v8-artifacts/
-          # 收集脚本生成的 .v8.env（Gradle 期望的 env 文件）
-          find . -name "aarch64-linux-android.v8.env" -exec cp {} v8-artifacts/ \; 2>/dev/null || true
-          echo "=== collected ==="
-          ls -la v8-artifacts/
-
-      - name: Upload prebuilt V8
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-v8-prebuilt-${{ github.sha }}
-          path: v8-artifacts/
-          if-no-files-found: error
-          retention-days: 14
-
   build-android-runtime:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -136,6 +73,69 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  build-android-v8:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install V8 build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            python3 python3-venv python3-pip \
+            curl git pkg-config libssl-dev unzip
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.95.0
+          targets: aarch64-linux-android
+
+      - name: Fetch Android NDK
+        run: bash tools/android-runtime/fetch_ndk_wsl.sh
+
+      - name: Create Python venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python --version
+
+      - name: Build V8 for aarch64-linux-android
+        env:
+          ANDROID_NDK_HOME: ${{ github.workspace }}/.cache/operit-android-runtime/android-ndk-r29-beta4
+          PYTHONUTF8: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: |
+          .venv/bin/python tools/build_scripts/prepare_android_v8.py --abi arm64-v8a
+
+      - name: Collect V8 artifacts
+        run: |
+          mkdir -p v8-artifacts
+          SRC="tools/release/work/android-v8/152.2.0/build/aarch64-linux-android/release"
+          if [ ! -d "$SRC" ]; then
+            echo "V8 build output not found at $SRC"
+            find tools/release/work/android-v8 -maxdepth 4 -type d || true
+            exit 1
+          fi
+          cp -r "$SRC"/. v8-artifacts/
+          # 收集脚本生成的 .v8.env（Gradle 期望的 env 文件）
+          find . -name "aarch64-linux-android.v8.env" -exec cp {} v8-artifacts/ \; 2>/dev/null || true
+          echo "=== collected ==="
+          ls -la v8-artifacts/
+
+      - name: Upload prebuilt V8
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-v8-prebuilt-${{ github.sha }}
+          path: v8-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
   build-android:
 
     needs: [build-android-runtime, build-android-v8]
@@ -148,9 +148,6 @@ jobs:
       FVM_VERSION: 4.3.0
       PYTHONUTF8: "1"
       PYTHONIOENCODING: "utf-8"
-      GN: "C:\\v8-tools\\gn.exe"
-      NINJA: "C:\\v8-tools\\ninja.exe"
-      NO_PRINT_GN_ARGS: "1"
       OPERIT_V8_PREBUILT: "1"   # ← 告诉 Gradle 跳过 V8 编译
 
     steps:
