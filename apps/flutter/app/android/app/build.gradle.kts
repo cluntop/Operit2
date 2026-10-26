@@ -256,6 +256,12 @@ fun parseOperitV8EnvFile(file: File): Map<String, String> = file.readLines()
 val prepareOperitAndroidV8Tasks = selectedOperitRustTargets.associateWith { target ->
     val abiTaskSuffix = target.abi.replace("-", "").replace("_", "")
     tasks.register<Exec>("prepareOperitAndroidV8$abiTaskSuffix") {
+       val envFile = operitV8EnvFile("aarch64-linux-android")
+       val skipBuild = envFile.exists() && System.getenv("OPERIT_V8_PREBUILT") == "1"
+        if (skipBuild) {
+            println("Using prebuilt Android V8 from ${envFile}")
+            return@register
+        }
         description = "Builds the source-built V8 library and bindings required by the Rust bridge"
         group = "operit"
         val envFile = operitV8EnvFile(target.rustTarget)
