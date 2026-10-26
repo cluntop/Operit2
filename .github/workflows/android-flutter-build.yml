@@ -322,20 +322,47 @@ jobs:
               $_.Context.PostContext
             }
 
+      - name: Find Aliyun mirror declarations
+        shell: pwsh
+        run: |
+          $exclude = @('\\\.fvm\\','\\\.gradle\\','\\build\\','\\\.dart_tool\\','\\node_modules\\')
+          Get-ChildItem -Path . -Recurse -File -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
+            Where-Object { $p = $_.FullName; -not ($exclude | Where-Object { $p -match $_ }) } |
+            Select-String -Pattern "maven\.aliyun\.com" -Context 2,2 |
+            ForEach-Object {
+              Write-Host "=== $($_.Path):$($_.LineNumber) ==="
+              $_.Context.PreContext
+              $_.Line
+              $_.Context.PostContext
+            }
+
       - name: Strip Aliyun Maven mirrors in CI
         shell: pwsh
         run: |
-          $files = Get-ChildItem -Path . -Recurse -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -notmatch '\\build\\' }
+          # 只扫项目自己的 gradle 文件，排除 Flutter SDK、构建产物、依赖缓存
+          $exclude = @(
+            '\\\.fvm\\',
+            '\\\.gradle\\',
+            '\\build\\',
+            '\\\.dart_tool\\',
+            '\\node_modules\\'
+          )
+          $files = Get-ChildItem -Path . -Recurse -File -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
+            Where-Object {
+              $p = $_.FullName
+              -not ($exclude | Where-Object { $p -match $_ })
+            }
+      
+          if (-not $files) { throw "No gradle files found after filtering" }
+      
           $patched = 0
           foreach ($f in $files) {
             $raw = Get-Content $f.FullName -Raw
             if ($raw -notmatch 'maven\.aliyun\.com') { continue }
             Write-Host "Patching: $($f.FullName)"
-            # 删掉单行 maven { url = uri("https://maven.aliyun.com/...") } 或 setUrl(...) 形式
             $new = $raw -replace '(?m)^[ \t]*maven[ \t]*\{[ \t]*(url[ \t]*=[ \t]*uri|setUrl)[ \t]*\([ \t]*"https://maven\.aliyun\.com[^"]*"[ \t]*\)[ \t]*\}[ \t]*\r?\n', ''
             if ($new -ne $raw) {
-              Set-Content -Path $f.FullName -Value $new -Encoding utf8
+              Set-Content -Path $f.FullName -Value $new -Encoding utf8 -NoNewline
               $patched++
             }
           }
