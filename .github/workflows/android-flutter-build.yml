@@ -78,6 +78,8 @@ jobs:
     timeout-minutes: 120
     env:
       LIBCLANG_PATH: /usr/lib/llvm-21/lib
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
     defaults:
       run:
         shell: bash
@@ -93,6 +95,15 @@ jobs:
             python3 python3-venv python3-pip \
             curl git pkg-config libssl-dev unzip \
             software-properties-common wget gnupg
+
+      - name: Set LLVM 21 as default
+        run: |
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-21 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-21 100
+          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-21 100
+          # 验证
+          clang --version | head -1
+          llvm-config --version
 
       - name: Install LLVM 21 via llvm.sh
         run: |
@@ -118,21 +129,28 @@ jobs:
           python3 -m venv .venv
           .venv/bin/python --version
 
-      - name: Diagnose LLVM and LIBCLANG_PATH
+      - name: Diagnose LLVM and environment
         run: |
           echo "=== LIBCLANG_PATH: $LIBCLANG_PATH ==="
-          echo "=== which clang-21 ==="
-          which clang-21 || echo "clang-21 not found"
-          echo "=== /usr/lib/llvm-21/lib contents ==="
-          ls -la /usr/lib/llvm-21/lib/libclang.so* 2>/dev/null || echo "libclang.so not found in /usr/lib/llvm-21/lib"
           echo "=== llvm-config-21 version ==="
-          llvm-config-21 --version 2>/dev/null || echo "llvm-config-21 not found"
+          llvm-config-21 --version || echo "llvm-config-21 NOT FOUND"
+          echo "=== libclang in /usr/lib/llvm-21/lib ==="
+          ls -la /usr/lib/llvm-21/lib/libclang.so* 2>/dev/null || echo "libclang.so NOT FOUND in expected path"
+          echo "=== which clang-21 ==="
+          which clang-21 || echo "clang-21 NOT FOUND"
+
+      - name: Diagnose default clang and llvm-config
+        run: |
+          echo "=== default clang ==="
+          which clang && clang --version | head -1 || echo "clang not found"
+          echo "=== default llvm-config ==="
+          which llvm-config && llvm-config --version || echo "llvm-config not found"
+          echo "=== llvm-config-21 path ==="
+          which llvm-config-21
 
       - name: Build V8 for aarch64-linux-android
         env:
           ANDROID_NDK_HOME: ${{ github.workspace }}/.cache/operit-android-runtime/android-ndk-r29-beta4
-          PYTHONUTF8: "1"
-          PYTHONIOENCODING: "utf-8"
         run: |
           mkdir -p apps/flutter/native/operit-flutter-bridge/target/operit-v8
           .venv/bin/python tools/build_scripts/prepare_android_v8.py \
