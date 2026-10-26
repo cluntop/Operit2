@@ -322,16 +322,39 @@ jobs:
               $_.Context.PostContext
             }
 
-      - name: Remove Aliyun Maven Mirror in CI
-        if: ${{ env.CI == 'true' }}
+      - name: Strip Aliyun Maven mirrors in CI
         shell: pwsh
         run: |
-          $settingsFile = "apps/flutter/app/android/settings.gradle.kts"
-          if (Test-Path $settingsFile) {
-            (Get-Content $settingsFile) -replace 'maven\s*\{\s*url\s*=\s*uri\("https://maven\.aliyun\.com/repository/google"\)\s*\}', '' `
-                                       -replace 'maven\s*\{\s*url\s*=\s*uri\("https://maven\.aliyun\.com/repository/public"\)\s*\}', '' |
-              Set-Content $settingsFile -Encoding utf8
+          $files = Get-ChildItem -Path . -Recurse -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\build\\' }
+          $patched = 0
+          foreach ($f in $files) {
+            $raw = Get-Content $f.FullName -Raw
+            if ($raw -notmatch 'maven\.aliyun\.com') { continue }
+            Write-Host "Patching: $($f.FullName)"
+            # 删掉单行 maven { url = uri("https://maven.aliyun.com/...") } 或 setUrl(...) 形式
+            $new = $raw -replace '(?m)^[ \t]*maven[ \t]*\{[ \t]*(url[ \t]*=[ \t]*uri|setUrl)[ \t]*\([ \t]*"https://maven\.aliyun\.com[^"]*"[ \t]*\)[ \t]*\}[ \t]*\r?\n', ''
+            if ($new -ne $raw) {
+              Set-Content -Path $f.FullName -Value $new -Encoding utf8
+              $patched++
+            }
           }
+          if ($patched -eq 0) {
+            throw "No Aliyun mirror lines were patched. Check settings.gradle.kts manually."
+          }
+          Write-Host "Patched $patched file(s)"
+
+      - name: Find Aliyun mirror declarations
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path . -Recurse -Include *.gradle,*.gradle.kts -ErrorAction SilentlyContinue |
+            Select-String -Pattern "maven\.aliyun\.com" -Context 2,2 |
+            ForEach-Object {
+              Write-Host "=== $($_.Path):$($_.LineNumber) ==="
+              $_.Context.PreContext
+              $_.Line
+              $_.Context.PostContext
+            }
 
       - name: Build and package Android app
         shell: pwsh
