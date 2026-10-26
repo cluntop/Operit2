@@ -10,7 +10,7 @@ jobs:
 
   build-android-runtime:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     defaults:
       run:
@@ -76,6 +76,8 @@ jobs:
   build-android-v8:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
+    env:
+      LIBCLANG_PATH: /usr/lib/llvm-21/lib
     defaults:
       run:
         shell: bash
@@ -83,7 +85,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install LLVM 21 and V8 build dependencies
+      - name: Install V8 build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -92,14 +94,15 @@ jobs:
             curl git pkg-config libssl-dev unzip \
             software-properties-common wget gnupg
 
-          # 添加 LLVM 官方 APT 仓库 (Ubuntu 24.04 代号 noble)
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository -y "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main"
-          sudo apt-get update
-
-          # 安装 LLVM 21 全家桶
-          sudo apt-get install -y \
-            clang-21 lld-21 llvm-21-dev libclang-21-dev libclang-cpp21 clang-tools-21
+      - name: Install LLVM 21 via llvm.sh
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 21
+          sudo apt-get install -y libclang-21-dev llvm-21-dev
+          # 验证
+          llvm-config-21 --version
+          ls /usr/lib/llvm-21/lib/libclang.so* || echo "WARNING: libclang.so not found"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -115,14 +118,21 @@ jobs:
           python3 -m venv .venv
           .venv/bin/python --version
 
-      - name: Build V8 for aarch64-linux-android
+      - name: Diagnose LLVM and LIBCLANG_PATH
+        run: |
+          echo "=== LIBCLANG_PATH: $LIBCLANG_PATH ==="
+          echo "=== which clang-21 ==="
+          which clang-21 || echo "clang-21 not found"
+          echo "=== /usr/lib/llvm-21/lib contents ==="
+          ls -la /usr/lib/llvm-21/lib/libclang.so* 2>/dev/null || echo "libclang.so not found in /usr/lib/llvm-21/lib"
+          echo "=== llvm-config-21 version ==="
+          llvm-config-21 --version 2>/dev/null || echo "llvm-config-21 not found"
 
+      - name: Build V8 for aarch64-linux-android
         env:
           ANDROID_NDK_HOME: ${{ github.workspace }}/.cache/operit-android-runtime/android-ndk-r29-beta4
           PYTHONUTF8: "1"
           PYTHONIOENCODING: "utf-8"
-          LIBCLANG_PATH: /usr/lib/llvm-21/lib
-
         run: |
           mkdir -p apps/flutter/native/operit-flutter-bridge/target/operit-v8
           .venv/bin/python tools/build_scripts/prepare_android_v8.py \
