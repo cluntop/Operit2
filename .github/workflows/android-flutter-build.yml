@@ -83,6 +83,9 @@ jobs:
       FVM_VERSION: 4.3.0
       PYTHONUTF8: "1"
       PYTHONIOENCODING: "utf-8"
+      GN: "C:\\v8-tools\\gn.exe"
+      NINJA: "C:\\v8-tools\\ninja.exe"
+      NO_PRINT_GN_ARGS: "1"
 
     steps:
       - name: Checkout
@@ -218,6 +221,14 @@ jobs:
       
           # 将工具目录加入 PATH
           $toolsDir | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Verify GN and Ninja are accessible
+        shell: pwsh
+        run: |
+          Write-Host "GN: $env:GN"
+          & $env:GN --version
+          Write-Host "Ninja: $env:NINJA"
+          & $env:NINJA --version
 
       - name: Set Ninja env var for V8 build
         shell: pwsh
