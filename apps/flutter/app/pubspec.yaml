@@ -76,8 +76,8 @@ dependencies:
   package_info_plus: ^10.2.2
   url_launcher_ohos:
     git:
-      url: https://gitee.com/openharmony-sig/flutter_packages.git
-      ref: 35fb467533e174411a117b2a030c15d2a3a9687c
+      url: https://gitcode.com/openharmony-sig/flutter_packages.git
+      ref: bddb2c981fcf826eaf19ed97f55113708aa55727
       path: packages/url_launcher/url_launcher_ohos
   file_selector: ^1.1.0
   image_picker_android: ^0.8.13+17
