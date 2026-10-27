@@ -254,21 +254,21 @@ jobs:
 
       - name: Place V8 env file where Gradle expects
         shell: pwsh
-          run: |
-            $releaseDir = "tools/release/work/android-v8/152.2.0/aarch64-linux-android"
-            $archive = Get-ChildItem -Path $releaseDir -Filter "librusty_v8*.a" | Select-Object -First 1
-            $binding = Get-ChildItem -Path $releaseDir -Filter "src_binding*.rs" | Select-Object -First 1
-            if (-not $archive) { throw "No librusty_v8 .a found under $releaseDir" }
-            if (-not $binding) { throw "No src_binding .rs found under $releaseDir" }
-        
-            $dst = "apps/flutter/native/operit-flutter-bridge/target/operit-v8/aarch64-linux-android.v8.env"
-            New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
-            @(
-              "unset V8_FROM_SOURCE DOCS_RS V8_FORCE_DEBUG",
-              "export RUSTY_V8_ARCHIVE=$($archive.FullName)",
-              "export RUSTY_V8_SRC_BINDING_PATH=$($binding.FullName)"
-            ) | Set-Content -Path $dst -Encoding utf8
-            Get-Content $dst
+        run: |
+          $releaseDir = "tools/release/work/android-v8/152.2.0/aarch64-linux-android"
+          $archive = Get-ChildItem -Path $releaseDir -Filter "librusty_v8*.a" | Select-Object -First 1
+          $binding = Get-ChildItem -Path $releaseDir -Filter "src_binding*.rs" | Select-Object -First 1
+          if (-not $archive) { throw "No librusty_v8 .a found under $releaseDir" }
+          if (-not $binding) { throw "No src_binding .rs found under $releaseDir" }
+      
+          $dst = "apps/flutter/native/operit-flutter-bridge/target/operit-v8/aarch64-linux-android.v8.env"
+          New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
+          @(
+            "unset V8_FROM_SOURCE DOCS_RS V8_FORCE_DEBUG",
+            "export RUSTY_V8_ARCHIVE=$($archive.FullName)",
+            "export RUSTY_V8_SRC_BINDING_PATH=$($binding.FullName)"
+          ) | Set-Content -Path $dst -Encoding utf8
+          Get-Content $dst
 
       - name: Install bootstrap Dart
         uses: dart-lang/setup-dart@v1
