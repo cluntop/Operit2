@@ -1284,7 +1284,7 @@ packages:
       resolved-ref: "bddb2c981fcf826eaf19ed97f55113708aa55727"
       url: "https://gitcode.com/openharmony-sig/flutter_packages.git"
     source: git
-    version: "1.0.0+1"
+    version: "1.0.0+2"
   video_player_platform_interface:
     dependency: transitive
     description:
