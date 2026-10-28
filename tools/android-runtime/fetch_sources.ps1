@@ -24,7 +24,7 @@ $items = @(
     },
     @{
         Name = "talloc-2.4.3"
-        Url = "https://www.samba.org/ftp/talloc/talloc-2.4.3.tar.gz"
+        Url = "https://download.samba.org/pub/talloc/talloc-2.4.3.tar.gz"
         Archive = "talloc-2.4.3.tar.gz"
         Sha256 = "DC46C40B9F46BB34DD97FE41F548B0E8B247B77A918576733C528E83ABD854DD"
         Extracted = "talloc-2.4.3"
