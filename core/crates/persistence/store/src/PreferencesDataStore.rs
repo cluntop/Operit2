@@ -2282,6 +2282,24 @@ impl PreferencesSyncedEntry {
         }
     }
 
+    /// Returns the explicit preference schema carried by this operation.
+    pub(crate) fn schemaVersion(&self) -> Option<u32> {
+        self.schemaVersion
+    }
+
+    /// Rejects a different preference representation before any values or receipts are committed.
+    pub(crate) fn requireSchemaVersion(&self, local: u32) -> Result<(), PreferencesDataStoreError> {
+        let remote = self.schemaVersion();
+        if remote != Some(local) {
+            let remote = remote.map(|version| version.to_string()).unwrap_or_else(|| "missing".into());
+            return Err(PreferencesDataStoreError::Message(format!(
+                "preference schema version mismatch: path={} local={local} remote={remote}; synchronization skipped",
+                self.storagePath
+            )));
+        }
+        Ok(())
+    }
+
     /// Returns the root entity keys affected by one validated operation.
     pub(crate) fn keys(&self) -> Vec<&str> {
         self.mutation.keys()
@@ -2394,23 +2412,6 @@ impl PreferencesSyncedEntry {
             }
         }
         Ok(())
-    }
-
-    /// Presents the complete local representation to its owner's historical value decoder.
-    pub(crate) fn storedSnapshot(
-        storagePath: &str,
-        encrypted: bool,
-        preferences: &Preferences,
-    ) -> Result<Self, PreferencesDataStoreError> {
-        Ok(Self {
-            storagePath: storagePath.into(), encrypted,
-            schemaVersion: Some(PreferencesDataStore::readSchemaVersion(preferences)?),
-            contractVersion: None,
-            mutation: PreferencesSyncedMutation::Transaction(preferences.iterEntries()
-                .filter(|(key, _)| *key != PREFERENCES_SCHEMA_VERSION_KEY_NAME)
-                .map(|(key, value)| PreferencesSyncedMutation::SetEntry { key: key.into(), value: value.clone() })
-                .collect()),
-        })
     }
 
     /// Converts complete historical values through an explicitly supplied owner codec.
@@ -2762,14 +2763,10 @@ impl PreferencesDataStore {
         Self::readSchemaVersion(&self.data()?)
     }
 
-    /// Reports whether schema migration and initial replication are already durably committed.
-    pub fn isSyncPrepared(&self, expected: u32) -> Result<bool, PreferencesDataStoreError> {
+    /// Reports whether the owner's schema and initial replication are durably committed.
+    pub fn isSyncPrepared(&self) -> Result<bool, PreferencesDataStoreError> {
         let preferences = self.data()?;
-        let actual = Self::readSchemaVersion(&preferences)?;
-        if actual > expected {
-            return Err(PreferencesDataStoreError::SchemaVersionTooNew { actual, expected });
-        }
-        Ok(actual == expected && preferences.replication.initialized)
+        Ok(self.schemaIsCurrent(&preferences)? && preferences.replication.initialized)
     }
 
     /// Decodes each immutable operation once and orders the prepared batch for shared consumers.
@@ -2839,35 +2836,45 @@ impl PreferencesDataStore {
     }
 
     /// Migrates, imports and replays a dataset under the same durable commit and dataset lock.
-    pub(crate) fn materializeSyncedDataset<R, P, F>(
-        storage: Arc<dyn RuntimeStorageHost>,
-        path: &str,
-        encrypted: bool,
+    pub(crate) fn materializeSyncedDataset<R, F>(
+        &self,
+        schemaVersion: u32,
         operations: &[SyncOperation],
-        prepare: P,
         materialize: F,
     ) -> Result<R, PreferencesDataStoreError>
     where
-        P: FnOnce(&mut Preferences, &[SyncOperation]) -> Result<(), PreferencesDataStoreError>,
         F: FnOnce(&mut Preferences, &[SyncOperation], bool) -> Result<R, PreferencesDataStoreError>,
     {
-        let store = if encrypted {
-            Self::newEncryptedWithStorage(storage.clone(), path)
-        } else {
-            Self::newWithStorage(storage.clone(), path)
-        };
-        let journal = store.syncOperationStore.as_ref().expect("replicated dataset journal");
-        Self::materializeSyncedSnapshot(storage, path, encrypted, |preferences| {
+        let path = self.storagePath.as_str();
+        let encrypted = self.encryption.is_some();
+        let journal = self.syncOperationStore.as_ref().expect("replicated dataset journal");
+        self.materializeSyncedSnapshot(|preferences| {
+            for operation in operations {
+                PreferencesSyncedEntry::fromOperation(operation)?.requireSchemaVersion(schemaVersion)?;
+            }
             let mut originals = journal.archivedPreferenceHistory(path)?;
             originals.extend(preferences.replication.outbox.iter().cloned());
+            // Old schemas stay in the immutable journal, but cannot participate in current replay.
+            originals.retain(|operation| operation.payload.get("schemaVersion").and_then(Value::as_u64) == Some(u64::from(schemaVersion)));
             let previous = preferences.clone();
-            prepare(preferences, &originals)?;
+            self.migratePreferencesToCurrentSchema(preferences)?;
+            let actual = Self::readSchemaVersion(preferences)?;
+            if actual != schemaVersion {
+                return Err(PreferencesDataStoreError::Message(format!(
+                    "preference schema version mismatch: path={path} local={actual} remote={schemaVersion}; synchronization skipped"
+                )));
+            }
+            if Self::readSchemaVersion(&previous)? != actual {
+                preferences.replication.initialized = false;
+            }
             let baseline = preferences.clone();
-            store.initializeReplicationUnlocked(&baseline, preferences, &originals)?;
+            self.initializeReplicationUnlocked(&baseline, preferences, &originals)?;
             originals.extend_from_slice(operations);
             originals.extend(preferences.replication.outbox.iter().cloned());
             let mut unique = BTreeMap::new();
             for operation in originals {
+                let entry = PreferencesSyncedEntry::fromOperation(&operation)?;
+                if entry.schemaVersion() != Some(schemaVersion) { continue; }
                 if let Some(existing) = unique.get(&operation.opId) {
                     if existing != &operation {
                         return Err(PreferencesDataStoreError::Message(
@@ -2918,32 +2925,29 @@ impl PreferencesDataStore {
 
     /// Stages and atomically publishes exactly one preference dataset before notifying its observers.
     fn materializeSyncedSnapshot<R, F>(
-        storage: Arc<dyn RuntimeStorageHost>,
-        path: &str,
-        encrypted: bool,
+        &self,
         materialize: F,
     ) -> Result<R, PreferencesDataStoreError>
     where
         F: FnOnce(&mut Preferences) -> Result<R, PreferencesDataStoreError>,
     {
-        let store = Self::newNodeLocalWithStorage(storage, path, encrypted);
-        let transaction = store
+        let transaction = self
             .sharedState
             .transaction
             .lock()
             .expect("preferences transaction mutex");
-        store.loadUnlocked()?;
-        let previous = store.loadedPreferences().expect("dataset loaded");
+        self.loadUnlocked()?;
+        let previous = self.loadedPreferences().expect("dataset loaded");
         let mut preferences = previous.clone();
         let result = materialize(&mut preferences)?;
         preferences.pendingMutations.clear();
         let changed = previous != preferences || previous.replication != preferences.replication;
         if changed {
-            store.commitSyncedSnapshotUnlocked(&preferences)?;
+            self.commitSyncedSnapshotUnlocked(&preferences)?;
         }
         drop(transaction);
         if changed {
-            store.notifyChanged();
+            self.notifyChanged();
         }
         Ok(result)
     }
@@ -3073,6 +3077,11 @@ impl PreferencesDataStore {
             version += 1;
         }
         preferences.set(&Self::schemaVersionKey(), schema.currentVersion);
+        // The migrated local values need a baseline in their new representation.
+        // Prior-version history must not stand in for that baseline during later replay.
+        if self.syncDescriptor.is_some() {
+            preferences.replication.initialized = false;
+        }
         Ok(true)
     }
 
@@ -3211,17 +3220,21 @@ impl PreferencesDataStore {
             .lock()
             .expect("PreferencesDataStore transaction mutex must not be poisoned");
         self.loadUnlocked().map_err(E::from)?;
-        self.migrateSchemaUnlocked().map_err(E::from)?;
-        let currentPreferences = self
+        // Upgrade a private snapshot. Publishing the migration before the edit
+        // exposes schema-only files during first-time record creation.
+        let mut currentPreferences = self
             .loadedPreferences()
             .expect("PreferencesDataStore must be loaded before editing");
+        let migrated = self
+            .migratePreferencesToCurrentSchema(&mut currentPreferences)
+            .map_err(E::from)?;
         let mut preferences = currentPreferences.clone();
         preferences.pendingMutations.clear();
         let result = transform(&mut preferences)?;
-        if Arc::ptr_eq(&preferences.values, &currentPreferences.values) {
-            return Ok(result);
-        }
-        if preferences == currentPreferences {
+        if !migrated
+            && (Arc::ptr_eq(&preferences.values, &currentPreferences.values)
+                || preferences == currentPreferences)
+        {
             return Ok(result);
         }
         if recordSyncOperations {
@@ -3252,14 +3265,16 @@ impl PreferencesDataStore {
             .lock()
             .expect("PreferencesDataStore transaction mutex must not be poisoned");
         self.loadUnlocked()?;
-        self.migrateSchemaUnlocked()?;
+        // Keep migration and replacement at one durable publication point so
+        // readers can only observe the previous or the complete new record.
+        let mut currentPreferences = self
+            .loadedPreferences()
+            .expect("PreferencesDataStore must be loaded before replacement");
+        let migrated = self.migratePreferencesToCurrentSchema(&mut currentPreferences)?;
         if let Some(schema) = &self.schema {
             preferences.set(&Self::schemaVersionKey(), schema.currentVersion);
         }
-        let currentPreferences = self
-            .loadedPreferences()
-            .expect("PreferencesDataStore must be loaded before replacement");
-        if currentPreferences == preferences {
+        if !migrated && currentPreferences == preferences {
             return Ok(());
         }
         self.persistUnlocked(&currentPreferences, &mut preferences)?;
@@ -3320,7 +3335,11 @@ impl PreferencesDataStore {
         if preferences.replication.initialized || self.syncDescriptor.is_none() {
             return Ok(());
         }
-        let history = Self::prepareSyncedEntries(&[], history)?;
+        let version = Self::readSchemaVersion(baseline)?;
+        let history = history.iter().filter(|operation|
+            operation.payload.get("schemaVersion").and_then(Value::as_u64) == Some(u64::from(version))
+        ).cloned().collect::<Vec<_>>();
+        let history = Self::prepareSyncedEntries(&[], &history)?;
         let mut assigned = BTreeSet::new();
         let mut increments = BTreeMap::<String, i128>::new();
         fn effects(
@@ -3344,8 +3363,10 @@ impl PreferencesDataStore {
                 _ => {}
             }
         }
+        // Only same-version history can explain a current baseline's assignments and deltas.
         for (_, entry) in &history { effects(&entry.mutation, &mut assigned, &mut increments); }
         let mut initial = emptyPreferences();
+        initial.set(&Self::schemaVersionKey(), version);
         for (key, value) in baseline.iterEntries() {
             if key == PREFERENCES_SCHEMA_VERSION_KEY_NAME || assigned.contains(key) { continue; }
             let mut value = value.clone();
@@ -3420,7 +3441,7 @@ impl PreferencesDataStore {
         self.writeStoredPreferencesUnlocked(preferences)
     }
 
-    /// Builds one immutable business operation independently of local storage migration versions.
+    /// Builds one immutable business operation carrying its preference representation version.
     fn localMutation(
         &self,
         previous: &Preferences,
@@ -3441,9 +3462,11 @@ impl PreferencesDataStore {
             .collect::<BTreeSet<_>>();
         keys.remove(PREFERENCES_SCHEMA_VERSION_KEY_NAME);
         keys.remove(PREFERENCES_REPLICATION_KEY);
+        let schemaVersion = Self::readSchemaVersion(preferences)?;
+        let schemaChanged = Self::readSchemaVersion(previous)? != schemaVersion;
         let changed = keys
             .into_iter()
-            .filter(|key| previousEntries.get(key) != nextEntries.get(key))
+            .filter(|key| schemaChanged || previousEntries.get(key) != nextEntries.get(key))
             .collect::<Vec<_>>();
         if changed.is_empty() {
             return Ok(None);
@@ -3474,7 +3497,7 @@ impl PreferencesDataStore {
                     value: entry.value,
                     encrypted: self.encryption.is_some(),
                     formatVersion: 2,
-                    schemaVersion: None,
+                    schemaVersion: Some(schemaVersion),
                     migrationSnapshot: false,
                     jsonPath: Vec::new(),
                     jsonMutation: None,
@@ -3493,7 +3516,7 @@ impl PreferencesDataStore {
                     storagePath: descriptor.storagePath.clone(),
                     encrypted: self.encryption.is_some(),
                     formatVersion: 2,
-                    schemaVersion: None,
+                    schemaVersion: Some(schemaVersion),
                     migrationSnapshot: false,
                     entries,
                 })?,
@@ -3623,7 +3646,7 @@ fn decodePreferencesSyncedMutation(
         ));
     }
     match operation {
-        "alias" if payload.formatVersion == 2 && payload.schemaVersion.is_none() => {
+        "alias" if payload.formatVersion == 2 => {
             let target = payload
                 .value
                 .as_str()

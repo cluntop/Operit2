@@ -1324,7 +1324,7 @@ impl CoreSpaceStore {
         let node = name.strip_suffix(".preferences.json")?;
         if node.starts_with('.') || validateNodeId(node).is_err() { return None; }
         Some(crate::PreferenceMerge::PreferenceMergeStore::values(
-            path, false, CORE_SPACE_RECORD_VERSION, Self::decodeSyncedRecord,
+            path, false, |storage, path| Self::new(storage).recordStore(path), Self::decodeSyncedRecord,
         ))
     }
 
@@ -1890,6 +1890,20 @@ mod tests {
                 None,
             )
             .expect("test device profile must initialize");
+    }
+
+    /// Schema-only files are incomplete records and must remain explicit errors.
+    #[test]
+    fn topology_rejects_schema_only_records_without_rewriting_them() {
+        let host = Arc::new(MemoryStorageHost::default());
+        let path = format!("{RUNTIME_SPACE_TOPOLOGY_DIR_PATH}/broken-node.preferences.json");
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "__operit_preferences_schema_version": CORE_SPACE_RECORD_VERSION,
+        })).unwrap();
+        host.writeBytes(&path, &bytes).unwrap();
+        let error = CoreSpaceStore::new(host.clone()).topologyRecords().unwrap_err();
+        assert_eq!(error, format!("Device space connection record is empty: {path}"));
+        assert_eq!(host.readBytes(&path).unwrap(), bytes);
     }
 
     /// Rejects corrupt committed records, including ordinary dot-prefixed files exposed by the host.

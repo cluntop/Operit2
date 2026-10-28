@@ -12,11 +12,15 @@ pub mod CoreNodeBindingStore;
 pub mod CoreNodeIdentityStore;
 #[path = "CoreSpaceStore.rs"]
 pub mod CoreSpaceStore;
+#[path = "NetworkControlReadModel.rs"]
+mod NetworkControlReadModel;
 #[path = "NetworkControlStore.rs"]
 pub mod NetworkControlStore;
 #[cfg(feature = "full")]
 #[path = "PluginStorage.rs"]
 pub mod PluginStorage;
+#[path = "PreferenceLayout.rs"]
+pub mod PreferenceLayout;
 #[path = "PreferenceMerge.rs"]
 pub mod PreferenceMerge;
 #[path = "PreferencesDataStore.rs"]
